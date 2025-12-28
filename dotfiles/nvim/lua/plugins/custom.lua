@@ -239,4 +239,48 @@ return {
       },
     },
   },
+
+  -- Hydra: 연속 키 입력 모드 (window resize 등)
+  {
+    "nvimtools/hydra.nvim",
+    config = function()
+      local Hydra = require("hydra")
+
+      Hydra({
+        name = "Window resize",
+        mode = "n",
+        body = "<C-w>",
+        heads = {
+          { ">", "<C-w>>", { desc = "width +" } },
+          { "<", "<C-w><", { desc = "width -" } },
+          { "+", "<C-w>+", { desc = "height +" } },
+          { "-", "<C-w>-", { desc = "height -" } },
+          { "=", "<C-w>=", { desc = "equalize" } },
+          { "h", "<C-w>h", { desc = "left" } },
+          { "j", "<C-w>j", { desc = "down" } },
+          { "k", "<C-w>k", { desc = "up" } },
+          { "l", "<C-w>l", { desc = "right" } },
+          { "q", nil, { exit = true, desc = "exit" } },
+          { "<Esc>", nil, { exit = true, desc = false } },
+        },
+        config = {
+          color = "pink",
+          invoke_on_body = true,
+          hint = {
+            type = "window",
+            position = "middle",
+            border = "rounded",
+          },
+        },
+      })
+    end,
+  },
+
+  -- Window zoom toggle
+  {
+    "szw/vim-maximizer",
+    keys = {
+      { "<Leader>z", "<cmd>MaximizerToggle<CR>", desc = "Zoom window toggle" },
+    },
+  },
 }
