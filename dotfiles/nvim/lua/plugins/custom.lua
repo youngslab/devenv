@@ -173,6 +173,7 @@ return {
       shell = "/usr/bin/zsh",
     },
     keys = {
+      { "<C-\\>", "<cmd>ToggleTerm<cr>", desc = "Toggle terminal" },
       { "<leader>tt", "<cmd>ToggleTerm<cr>", desc = "Toggle terminal" },
       { "<leader>tf", "<cmd>ToggleTerm direction=float<cr>", desc = "Float terminal" },
       { "<leader>tv", "<cmd>ToggleTerm direction=vertical size=80<cr>", desc = "Vertical terminal" },

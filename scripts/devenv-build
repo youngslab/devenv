@@ -1,0 +1,21 @@
+#!/bin/bash
+# DevEnv container builder
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+IMAGE_NAME="devenv"
+
+cd "$PROJECT_DIR"
+
+echo "Building devenv container..."
+docker build \
+  --build-arg USERNAME="$(whoami)" \
+  --build-arg UID="$(id -u)" \
+  --build-arg GID="$(id -g)" \
+  -t "$IMAGE_NAME" \
+  "$@" \
+  .
+
+echo "Done! Run 'devenv' to start the container."

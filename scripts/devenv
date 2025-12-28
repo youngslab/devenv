@@ -30,10 +30,18 @@ docker run --rm \
   chown -R "$(id -u):$(id -g)" "/home/${USERNAME}" 2>/dev/null
 
 # Run container
+# Docker 그룹 GID (호스트)
+DOCKER_GID=$(getent group docker 2>/dev/null | cut -d: -f3)
+
+# --group-add 옵션 구성
+GROUP_OPTS="--group-add sudo"
+[ -n "$DOCKER_GID" ] && GROUP_OPTS="$GROUP_OPTS --group-add $DOCKER_GID"
+
 docker run -it --rm \
   --name devenv \
   --hostname "$(hostname -s)" \
   --user "$(id -u):$(id -g)" \
+  $GROUP_OPTS \
   -e HOME="/home/${USERNAME}" \
   -e USER="${USERNAME}" \
   -v "${HOME_VOLUME}:/home/${USERNAME}" \
@@ -44,4 +52,5 @@ docker run -it --rm \
   -v "$HOME/.config/github-copilot:/home/$USERNAME/.config/github-copilot" \
   -v "$HOME/.ssh:/home/$USERNAME/.ssh:ro" \
   -v "$HOME/.gnupg:/home/$USERNAME/.gnupg:ro" \
+  -v /var/run/docker.sock:/var/run/docker.sock \
   "$IMAGE_NAME" "$@"

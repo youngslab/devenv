@@ -11,7 +11,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       sudo ca-certificates curl wget git tzdata locales openssh-client \
       zsh tmux ripgrep less unzip fontconfig \
-      universal-ctags cscope \
+      universal-ctags cscope repo docker.io \
       build-essential cmake pkg-config \
       python3 python3-pip python3-venv \
       xclip \
