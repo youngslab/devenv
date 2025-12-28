@@ -1,0 +1,25 @@
+#!/bin/bash
+# DevEnv container launcher
+
+IMAGE_NAME="devenv"
+USERNAME=$(whoami)
+WORKSPACE_DIR="$HOME/workspace"
+DOTFILES_DIR="$HOME/workspace/devenv/dotfiles"
+
+# Named volume for container home (persistent across restarts)
+# Replace dots in username for valid volume name
+SAFE_USERNAME="${USERNAME//./-}"
+HOME_VOLUME="devenv-home-${SAFE_USERNAME}"
+
+# Run container
+docker run -it --rm \
+  --name devenv \
+  --hostname "$(hostname -s)" \
+  -v "${HOME_VOLUME}:/home/${USERNAME}" \
+  -v "$WORKSPACE_DIR:/home/$USERNAME/workspace" \
+  -v "$DOTFILES_DIR:/home/$USERNAME/.dotfiles" \
+  -v "$HOME/.claude:/home/$USERNAME/.claude" \
+  -v "$HOME/.config/gh:/home/$USERNAME/.config/gh" \
+  -v "$HOME/.ssh:/home/$USERNAME/.ssh:ro" \
+  -v "$HOME/.gnupg:/home/$USERNAME/.gnupg:ro" \
+  "$IMAGE_NAME" "$@"

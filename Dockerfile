@@ -63,6 +63,15 @@ RUN mkdir -p /usr/share/fonts/nerd-fonts && \
 RUN sed -i 's/# \(en_US.UTF-8 UTF-8\)/\1/' /etc/locale.gen && \
     locale-gen && update-ca-certificates
 
+# oh-my-zsh + 플러그인을 /opt에 설치 (템플릿용)
+RUN git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh /opt/oh-my-zsh && \
+    git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions /opt/oh-my-zsh/custom/plugins/zsh-autosuggestions && \
+    git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting /opt/oh-my-zsh/custom/plugins/zsh-syntax-highlighting
+
+# AstroNvim 템플릿을 /opt에 설치
+RUN git clone --depth 1 https://github.com/AstroNvim/template /opt/astro-nvim-template && \
+    rm -rf /opt/astro-nvim-template/.git
+
 # 사용자/그룹 생성 (GID 충돌 시 기존 그룹 재사용)
 RUN set -eux; \
     if getent group "${GID}" >/dev/null; then \
@@ -76,35 +85,12 @@ RUN set -eux; \
     echo "%sudo ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/90-nopasswd-sudo && \
     chmod 0440 /etc/sudoers.d/90-nopasswd-sudo
 
-# oh-my-zsh + 플러그인 설치
+# entrypoint 스크립트 복사
+COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 USER ${USERNAME}
-ENV ZSH="/home/${USERNAME}/.oh-my-zsh"
-ENV DOTFILES_DIR="/home/${USERNAME}/.dotfiles"
-
-RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended && \
-    git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions ${ZSH}/custom/plugins/zsh-autosuggestions && \
-    git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting ${ZSH}/custom/plugins/zsh-syntax-highlighting
-
-# AstroNvim 설치
-RUN git clone --depth 1 https://github.com/AstroNvim/template ~/.config/nvim && \
-    rm -rf ~/.config/nvim/.git
-
-# 커스텀 nvim 설정 복사
-COPY --chown=${UID}:${GID} dotfiles/nvim/lua/plugins/custom.lua /home/${USERNAME}/.config/nvim/lua/plugins/
-COPY --chown=${UID}:${GID} dotfiles/nvim/lua/polish.lua /home/${USERNAME}/.config/nvim/lua/
-
-# dotfiles 심볼릭 링크 설정 (볼륨 마운트 시 적용됨)
-RUN mkdir -p ${DOTFILES_DIR} ~/.config && \
-    # zsh 설정
-    sed -i 's/^ZSH_THEME=.*/ZSH_THEME="refined_fast"/' ~/.zshrc && \
-    sed -i 's/^plugins=.*/plugins=(git fzf z zsh-autosuggestions zsh-syntax-highlighting)/' ~/.zshrc && \
-    echo '# Load custom dotfiles' >> ~/.zshrc && \
-    echo '[ -f ~/.dotfiles/shell/shellrc ] && source ~/.dotfiles/shell/shellrc' >> ~/.zshrc && \
-    # 심볼릭 링크 생성
-    ln -sf ${DOTFILES_DIR}/zsh/refined_fast.zsh-theme ${ZSH}/custom/themes/refined_fast.zsh-theme && \
-    ln -sf ${DOTFILES_DIR}/tmux/tmux.conf ~/.tmux.conf && \
-    ln -sf ${DOTFILES_DIR}/git/gitconfig ~/.gitconfig && \
-    ln -sf ${DOTFILES_DIR}/scripts ~/.scripts
-
 WORKDIR /home/${USERNAME}
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["zsh"]

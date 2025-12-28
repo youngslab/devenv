@@ -113,4 +113,96 @@ return {
       colorscheme = "astrodark",
     },
   },
+
+  -- Mason: LSP/linter/formatter 설치
+  {
+    "williamboman/mason.nvim",
+    opts = {
+      ensure_installed = {
+        -- C/C++
+        "clangd",
+        "clang-format",
+        -- Python
+        "pyright",
+        "black",
+        "ruff",
+      },
+    },
+  },
+
+  -- Treesitter: 언어별 파서
+  {
+    "nvim-treesitter/nvim-treesitter",
+    opts = function(_, opts)
+      opts.ensure_installed = opts.ensure_installed or {}
+      vim.list_extend(opts.ensure_installed, {
+        "c",
+        "cpp",
+        "python",
+        "lua",
+        "vim",
+        "vimdoc",
+        "json",
+        "yaml",
+        "markdown",
+        "markdown_inline",
+        "bash",
+      })
+      return opts
+    end,
+  },
+
+  -- None-ls: Linter/Formatter
+  {
+    "nvimtools/none-ls.nvim",
+    opts = function(_, opts)
+      local null_ls = require("null-ls")
+      opts.sources = opts.sources or {}
+      vim.list_extend(opts.sources, {
+        -- C/C++
+        null_ls.builtins.formatting.clang_format,
+        -- Python
+        null_ls.builtins.formatting.black,
+        null_ls.builtins.diagnostics.ruff,
+      })
+      return opts
+    end,
+  },
+
+  -- Claude Code integration
+  {
+    "coder/claudecode.nvim",
+    dependencies = { "folke/snacks.nvim" },
+    config = true,
+    keys = {
+      { "<leader>ac", "<cmd>ClaudeCode<cr>", desc = "Toggle Claude" },
+      { "<leader>af", "<cmd>ClaudeCodeFocus<cr>", desc = "Focus Claude" },
+    },
+  },
+
+  -- GitHub Copilot
+  {
+    "zbirenbaum/copilot.lua",
+    cmd = "Copilot",
+    event = "InsertEnter",
+    opts = {
+      suggestion = {
+        enabled = true,
+        auto_trigger = true,
+        keymap = {
+          accept = "<Tab>",
+          accept_word = "<C-Right>",
+          accept_line = "<C-End>",
+          next = "<M-]>",
+          prev = "<M-[>",
+          dismiss = "<C-]>",
+        },
+      },
+      panel = { enabled = true },
+      filetypes = {
+        markdown = true,
+        yaml = true,
+      },
+    },
+  },
 }

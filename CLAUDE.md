@@ -9,24 +9,42 @@ This repository contains a Dockerfile for building an Ubuntu 24.04-based develop
 ## Build Commands
 
 ```bash
-# Build the container (USERNAME is required)
+# Build the container
 docker build --build-arg USERNAME=$(whoami) --build-arg UID=$(id -u) --build-arg GID=$(id -g) -t devenv .
+```
 
-# Run the container with mounted workspace
-docker run -it --rm -v ~/workspace:/home/$(whoami)/workspace devenv
+## Run Commands
+
+```bash
+# 방법 1: 스크립트 사용 (권장)
+# PATH에 추가: export PATH="$HOME/workspace/devenv/scripts:$PATH"
+devenv              # 기본 zsh 쉘
+devenv nvim         # nvim 직접 실행
+
+# 방법 2: 직접 실행 (모든 auth 마운트 포함)
+docker run -it --rm \
+  -v ~/workspace:/home/$(whoami)/workspace \
+  -v ~/workspace/devenv/dotfiles:/home/$(whoami)/.dotfiles \
+  -v ~/.claude:/home/$(whoami)/.claude \
+  -v ~/.config/gh:/home/$(whoami)/.config/gh \
+  -v ~/.ssh:/home/$(whoami)/.ssh:ro \
+  -v ~/.gnupg:/home/$(whoami)/.gnupg:ro \
+  devenv
 ```
 
 ## Container Features
 
 - Base: Ubuntu 24.04
-- Shell: zsh with oh-my-zsh (agnoster theme)
+- Shell: zsh with oh-my-zsh (refined_fast theme)
 - Plugins: git, fzf, z, zsh-autosuggestions, zsh-syntax-highlighting
 - Editor: Neovim (latest) with AstroNvim
 - Font: JetBrainsMono Nerd Font (아이콘 표시용)
-- Git: lazygit (AstroNvim 통합)
+- Git: lazygit, GitHub CLI (gh)
 - Dev tools: build-essential, cmake, python3, nodejs/npm
 - Search: ripgrep, fzf, ctags, cscope
-- llm: Claude Code
+- AI: Claude Code, GitHub Copilot, claudecode.nvim
+- LSP: clangd (C/C++), pyright (Python)
+- Linter/Formatter: clang-format, black, ruff
 
 **참고**: 호스트 터미널에서도 Nerd Font를 설정해야 아이콘이 정상 표시됩니다.
 
@@ -50,6 +68,21 @@ lazygit
 - `<Space>fw` - 텍스트 검색 (live grep)
 - `<Space>gg` - lazygit 열기
 - `<C-\>` - 터미널 토글
+
+### AI 단축키
+
+- `<Space>ac` - Claude Code 토글
+- `<Space>af` - Claude Code 포커스
+- `<Tab>` - Copilot 제안 수락
+- `<Alt-]>` / `<Alt-[>` - Copilot 다음/이전 제안
+
+### 첫 실행 시 인증
+
+```bash
+:Copilot auth    # GitHub Copilot 인증
+claude           # Claude Code 인증 (터미널에서)
+gh auth login    # GitHub CLI 인증
+```
 
 ### AstroNvim 설정 커스터마이징
 
