@@ -280,7 +280,8 @@ return {
   {
     "szw/vim-maximizer",
     keys = {
-      { "<Leader>z", "<cmd>MaximizerToggle<CR>", desc = "Zoom window toggle" },
+      { "<C-z>", "<cmd>MaximizerToggle<CR>", desc = "Zoom window toggle", mode = { "n", "i", "v" } },
+      { "<C-z>", "<C-\\><C-n><cmd>MaximizerToggle<CR>i", desc = "Zoom window toggle", mode = "t" },
     },
   },
 }
