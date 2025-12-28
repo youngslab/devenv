@@ -1,19 +1,27 @@
 -- Custom polish settings (runs last in setup)
 
--- OSC 52 clipboard support (works in SSH/containers)
-if vim.fn.has("nvim-0.10") == 1 then
-  vim.g.clipboard = {
-    name = "OSC 52",
-    copy = {
-      ["+"] = require("vim.ui.clipboard.osc52").copy("+"),
-      ["*"] = require("vim.ui.clipboard.osc52").copy("*"),
-    },
-    paste = {
-      ["+"] = require("vim.ui.clipboard.osc52").paste("+"),
-      ["*"] = require("vim.ui.clipboard.osc52").paste("*"),
-    },
-  }
+-- OSC 52 clipboard support (works in SSH/containers/tmux)
+local function osc52_copy(text)
+  local base64 = vim.base64.encode(text)
+  local osc = string.format('\x1b]52;c;%s\x07', base64)
+  -- Wrap in tmux passthrough if inside tmux
+  if vim.env.TMUX then
+    osc = string.format('\x1bPtmux;\x1b%s\x1b\\', osc)
+  end
+  io.stdout:write(osc)
 end
+
+vim.g.clipboard = {
+  name = "OSC 52 (tmux aware)",
+  copy = {
+    ["+"] = function(lines) osc52_copy(table.concat(lines, "\n")) end,
+    ["*"] = function(lines) osc52_copy(table.concat(lines, "\n")) end,
+  },
+  paste = {
+    ["+"] = function() return { vim.fn.getreg(""), vim.fn.getregtype("") } end,
+    ["*"] = function() return { vim.fn.getreg(""), vim.fn.getregtype("") } end,
+  },
+}
 
 -- Highlight yanked text
 vim.api.nvim_create_autocmd("TextYankPost", {
@@ -57,6 +65,28 @@ vim.api.nvim_create_autocmd("VimResized", {
     vim.cmd("tabdo wincmd =")
   end,
 })
+
+-- Dim inactive windows + highlight window separator
+vim.api.nvim_create_autocmd("ColorScheme", {
+  desc = "Dim inactive windows and highlight separator",
+  group = vim.api.nvim_create_augroup("dim_inactive", { clear = true }),
+  callback = function()
+    local normal = vim.api.nvim_get_hl(0, { name = "Normal" })
+    if normal.bg then
+      local r = math.floor(normal.bg / 0x10000)
+      local g = math.floor((normal.bg % 0x10000) / 0x100)
+      local b = normal.bg % 0x100
+      local dimmed = math.max(0, r - 12) * 0x10000 + math.max(0, g - 12) * 0x100 + math.max(0, b - 12)
+      vim.api.nvim_set_hl(0, "NormalNC", { bg = dimmed })
+    end
+    -- Bright window separator
+    vim.api.nvim_set_hl(0, "WinSeparator", { fg = "#7aa2f7", bold = true })
+  end,
+})
+vim.defer_fn(function() vim.cmd("doautocmd ColorScheme") end, 50)
+
+-- Terminal mode: Esc to exit to normal mode
+vim.keymap.set('t', '<Esc>', [[<C-\><C-n>]], { desc = "Exit terminal mode" })
 
 -- Filetype-specific settings
 vim.api.nvim_create_autocmd("FileType", {
