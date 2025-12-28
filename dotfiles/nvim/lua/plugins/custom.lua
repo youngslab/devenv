@@ -71,6 +71,11 @@ return {
           ["<C-j>"] = { "<C-w>j", desc = "Move to lower window" },
           ["<C-k>"] = { "<C-w>k", desc = "Move to upper window" },
           ["<C-l>"] = { "<C-w>l", desc = "Move to right window" },
+          -- 한글 상태에서도 window 이동 (터미널에 따라 동작 안할 수 있음)
+          ["<C-ㅗ>"] = { "<C-w>h", desc = "Move to left window" },
+          ["<C-ㅓ>"] = { "<C-w>j", desc = "Move to lower window" },
+          ["<C-ㅏ>"] = { "<C-w>k", desc = "Move to upper window" },
+          ["<C-ㅣ>"] = { "<C-w>l", desc = "Move to right window" },
 
           -- Clear search highlight
           ["<Esc>"] = { "<cmd>nohlsearch<CR>", desc = "Clear search highlight" },
@@ -100,6 +105,20 @@ return {
         x = {
           ["<A-j>"] = { ":m '>+1<CR>gv=gv", desc = "Move selection down" },
           ["<A-k>"] = { ":m '<-2<CR>gv=gv", desc = "Move selection up" },
+        },
+        t = {
+          -- Exit terminal mode (normal mode로 전환)
+          ["<C-q>"] = { "<C-\\><C-n>", desc = "Exit terminal mode" },
+          -- Terminal mode window navigation
+          ["<C-h>"] = { "<C-\\><C-n><C-w>h", desc = "Move to left window" },
+          ["<C-j>"] = { "<C-\\><C-n><C-w>j", desc = "Move to lower window" },
+          ["<C-k>"] = { "<C-\\><C-n><C-w>k", desc = "Move to upper window" },
+          ["<C-l>"] = { "<C-\\><C-n><C-w>l", desc = "Move to right window" },
+          -- 한글 상태에서도 window 이동
+          ["<C-ㅗ>"] = { "<C-\\><C-n><C-w>h", desc = "Move to left window" },
+          ["<C-ㅓ>"] = { "<C-\\><C-n><C-w>j", desc = "Move to lower window" },
+          ["<C-ㅏ>"] = { "<C-\\><C-n><C-w>k", desc = "Move to upper window" },
+          ["<C-ㅣ>"] = { "<C-\\><C-n><C-w>l", desc = "Move to right window" },
         },
       },
     },
@@ -151,10 +170,23 @@ return {
   {
     "coder/claudecode.nvim",
     dependencies = { "folke/snacks.nvim" },
-    config = true,
+    config = function()
+      require("claudecode").setup()
+      -- Claude Code 터미널에 돌아올 때 자동으로 insert mode
+      vim.api.nvim_create_autocmd({ "BufEnter", "WinEnter" }, {
+        pattern = "term://*:claude",
+        callback = function()
+          vim.schedule(function()
+            vim.cmd("startinsert")
+          end)
+        end,
+      })
+    end,
     keys = {
       { "<leader>ac", "<cmd>ClaudeCode<cr>", desc = "Toggle Claude" },
       { "<leader>af", "<cmd>ClaudeCodeFocus<cr>", desc = "Focus Claude" },
+      { "<C-=>", "<cmd>ClaudeCode<cr>", desc = "Toggle Claude", mode = { "n", "t", "i" } },
+      { "<C-CR>", "<cmd>ClaudeCode<cr>", desc = "Toggle Claude", mode = { "n", "t", "i" } },
     },
   },
 
@@ -174,6 +206,7 @@ return {
     },
     keys = {
       { "<C-\\>", "<cmd>ToggleTerm<cr>", desc = "Toggle terminal" },
+      { "<C-\\>", "<cmd>ToggleTerm<cr>", mode = "t", desc = "Toggle terminal" },
       { "<leader>tt", "<cmd>ToggleTerm<cr>", desc = "Toggle terminal" },
       { "<leader>tf", "<cmd>ToggleTerm direction=float<cr>", desc = "Float terminal" },
       { "<leader>tv", "<cmd>ToggleTerm direction=vertical size=80<cr>", desc = "Vertical terminal" },

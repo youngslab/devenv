@@ -68,7 +68,7 @@ lazygit
 - `<Space>fw` - 텍스트 검색 (live grep)
 - `<Space>gg` - lazygit 열기
 - `<C-\>` - 터미널 토글 (toggleterm)
-- `<Esc>` - 터미널 모드에서 normal mode로 전환
+- `<C-q>` - 터미널 모드에서 normal mode로 전환
 
 ### AI 단축키
 
