@@ -11,15 +11,37 @@ DOTFILES_DIR="$HOME/workspace/devenv/dotfiles"
 SAFE_USERNAME="${USERNAME//./-}"
 HOME_VOLUME="devenv-home-${SAFE_USERNAME}"
 
+# 이미 실행 중이면 exec으로 접속
+if docker ps --format '{{.Names}}' | grep -q "^devenv$"; then
+  echo "Attaching to running container..."
+  exec docker exec -it --user "$(id -u):$(id -g)" devenv zsh
+fi
+
+# Volume 초기화 (비어있으면 권한 설정)
+if ! docker volume inspect "$HOME_VOLUME" &>/dev/null; then
+  echo "Creating volume with correct permissions..."
+  docker volume create "$HOME_VOLUME"
+fi
+
+# Volume 권한 확인 및 수정 (root로 실행)
+docker run --rm \
+  -v "${HOME_VOLUME}:/home/${USERNAME}" \
+  "$IMAGE_NAME" \
+  chown -R "$(id -u):$(id -g)" "/home/${USERNAME}" 2>/dev/null
+
 # Run container
 docker run -it --rm \
   --name devenv \
   --hostname "$(hostname -s)" \
+  --user "$(id -u):$(id -g)" \
+  -e HOME="/home/${USERNAME}" \
+  -e USER="${USERNAME}" \
   -v "${HOME_VOLUME}:/home/${USERNAME}" \
   -v "$WORKSPACE_DIR:/home/$USERNAME/workspace" \
   -v "$DOTFILES_DIR:/home/$USERNAME/.dotfiles" \
   -v "$HOME/.claude:/home/$USERNAME/.claude" \
   -v "$HOME/.config/gh:/home/$USERNAME/.config/gh" \
+  -v "$HOME/.config/github-copilot:/home/$USERNAME/.config/github-copilot" \
   -v "$HOME/.ssh:/home/$USERNAME/.ssh:ro" \
   -v "$HOME/.gnupg:/home/$USERNAME/.gnupg:ro" \
   "$IMAGE_NAME" "$@"

@@ -39,4 +39,4 @@ bindkey '^P' history-search-backward
 bindkey '^N' history-search-forward
 
 # fzf key bindings (Ctrl+R: history, Ctrl+T: files, Alt+C: cd)
-[ -f ~/.dotfiles/zsh/fzf-key-bindings.zsh ] && source ~/.dotfiles/zsh/fzf-key-bindings.zsh
+[ -f /usr/share/doc/fzf/examples/key-bindings.zsh ] && source /usr/share/doc/fzf/examples/key-bindings.zsh

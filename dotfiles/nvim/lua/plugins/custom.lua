@@ -130,28 +130,6 @@ return {
     },
   },
 
-  -- Treesitter: 언어별 파서
-  {
-    "nvim-treesitter/nvim-treesitter",
-    opts = function(_, opts)
-      opts.ensure_installed = opts.ensure_installed or {}
-      vim.list_extend(opts.ensure_installed, {
-        "c",
-        "cpp",
-        "python",
-        "lua",
-        "vim",
-        "vimdoc",
-        "json",
-        "yaml",
-        "markdown",
-        "markdown_inline",
-        "bash",
-      })
-      return opts
-    end,
-  },
-
   -- None-ls: Linter/Formatter
   {
     "nvimtools/none-ls.nvim",
@@ -177,6 +155,28 @@ return {
     keys = {
       { "<leader>ac", "<cmd>ClaudeCode<cr>", desc = "Toggle Claude" },
       { "<leader>af", "<cmd>ClaudeCodeFocus<cr>", desc = "Focus Claude" },
+    },
+  },
+
+  -- Toggleterm (terminal integration)
+  {
+    "akinsho/toggleterm.nvim",
+    version = "*",
+    opts = {
+      size = 15,
+      open_mapping = [[<C-\>]],
+      direction = "horizontal",  -- horizontal, vertical, float, tab
+      shade_terminals = true,
+      shading_factor = 2,
+      persist_size = true,
+      close_on_exit = true,
+      shell = "/usr/bin/zsh",
+    },
+    keys = {
+      { "<leader>tt", "<cmd>ToggleTerm<cr>", desc = "Toggle terminal" },
+      { "<leader>tf", "<cmd>ToggleTerm direction=float<cr>", desc = "Float terminal" },
+      { "<leader>tv", "<cmd>ToggleTerm direction=vertical size=80<cr>", desc = "Vertical terminal" },
+      { "<leader>th", "<cmd>ToggleTerm direction=horizontal<cr>", desc = "Horizontal terminal" },
     },
   },
 

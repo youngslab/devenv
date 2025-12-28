@@ -14,9 +14,13 @@ RUN apt-get update && \
       universal-ctags cscope \
       build-essential cmake pkg-config \
       python3 python3-pip python3-venv \
-      nodejs npm \
       xclip \
     && rm -rf /var/lib/apt/lists/*
+
+# Node.js 22 설치 (Copilot 요구사항)
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
 
 # fzf 최신 버전 설치 (apt 버전은 오래됨)
 RUN FZF_VERSION=$(curl -s "https://api.github.com/repos/junegunn/fzf/releases/latest" | grep -Po '"tag_name": "v?\K[^"]*') && \
@@ -63,6 +67,10 @@ RUN mkdir -p /usr/share/fonts/nerd-fonts && \
 RUN sed -i 's/# \(en_US.UTF-8 UTF-8\)/\1/' /etc/locale.gen && \
     locale-gen && update-ca-certificates
 
+# 터미널 색상 지원
+ENV TERM=xterm-256color
+ENV COLORTERM=truecolor
+
 # oh-my-zsh + 플러그인을 /opt에 설치 (템플릿용)
 RUN git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh /opt/oh-my-zsh && \
     git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions /opt/oh-my-zsh/custom/plugins/zsh-autosuggestions && \
@@ -72,8 +80,14 @@ RUN git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh /opt/oh-my-zsh && \
 RUN git clone --depth 1 https://github.com/AstroNvim/template /opt/astro-nvim-template && \
     rm -rf /opt/astro-nvim-template/.git
 
-# 사용자/그룹 생성 (GID 충돌 시 기존 그룹 재사용)
+# 사용자/그룹 생성 (UID/GID 충돌 시 기존 유저/그룹 처리)
 RUN set -eux; \
+    # 기존 UID 사용자 삭제 (ubuntu 등)
+    if getent passwd "${UID}" >/dev/null; then \
+        EXISTING_USER="$(getent passwd "${UID}" | cut -d: -f1)"; \
+        userdel -r "${EXISTING_USER}" 2>/dev/null || true; \
+    fi; \
+    # 그룹 처리
     if getent group "${GID}" >/dev/null; then \
         EXISTING_GROUP="$(getent group "${GID}" | cut -d: -f1)"; \
     else \
