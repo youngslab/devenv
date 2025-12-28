@@ -1,0 +1,17 @@
+# Build artifacts
+build.log
+*.log
+
+# Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local settings
+.claude/

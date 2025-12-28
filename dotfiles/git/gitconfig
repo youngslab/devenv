@@ -1,0 +1,27 @@
+[core]
+    editor = nvim
+    pager = less
+
+[alias]
+    l = log --oneline --graph --all
+    s = status -s
+    b = branch -a
+    d = diff
+    ds = diff --staged
+    c = commit
+    cm = commit -m
+    ca = commit --amend
+    co = checkout
+    pl = pull
+    ph = push
+    a = add
+    aa = add --all
+
+[color]
+    ui = auto
+
+[init]
+    defaultBranch = main
+
+[pull]
+    rebase = false

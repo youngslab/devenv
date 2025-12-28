@@ -1,0 +1,42 @@
+#!/usr/bin/env zsh
+
+# Path
+export PATH=~/.local/bin:~/.scripts:$PATH
+
+# Misc functions
+[ -f ~/.scripts/misc.sh ] && . ~/.scripts/misc.sh
+
+# Include .shellrc_* files (if any exist)
+for file in ~/.shellrc_*(N) ; do
+  [ -f "$file" ] && . "$file"
+done
+
+# Source aliases
+[ -f ~/.dotfiles/shell/aliases ] && . ~/.dotfiles/shell/aliases
+
+# LS_COLORS for colorized ls output
+export LS_COLORS='fi=00:mi=00:mh=00:ln=01;36:or=01;31:di=01;34:ow=04;01;34:st=34:tw=04;34:'
+LS_COLORS+='pi=01;33:so=01;33:do=01;33:bd=01;33:cd=01;33:su=01;35:sg=01;35:ca=01;35:ex=01;32'
+if (( ${terminfo[colors]:-0} >= 256 )); then
+  LS_COLORS+=':no=38;5;248'
+else
+  LS_COLORS+=':no=1;30'
+fi
+
+export TREE_COLORS=${LS_COLORS//04;}
+export LSCOLORS='ExGxDxDxCxDxDxFxFxexEx'
+
+# Editor
+export EDITOR=nvim
+export VISUAL=nvim
+
+# Locale (한글 입력 지원)
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+
+# History search with Ctrl+P/N (prefix-based)
+bindkey '^P' history-search-backward
+bindkey '^N' history-search-forward
+
+# fzf key bindings (Ctrl+R: history, Ctrl+T: files, Alt+C: cd)
+[ -f ~/.dotfiles/zsh/fzf-key-bindings.zsh ] && source ~/.dotfiles/zsh/fzf-key-bindings.zsh

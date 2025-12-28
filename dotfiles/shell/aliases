@@ -1,0 +1,22 @@
+# ls aliases
+alias ll='ls -alF --color=auto'
+alias la='ls -A --color=auto'
+alias l='ls -CF --color=auto'
+alias ls='ls --color=auto'
+
+# search1
+alias f='find . | grep --color=auto -i'
+alias g='grep --color=auto -nirEI'
+
+# git shortcuts
+alias gs='git status -s'
+alias gl='git log --oneline --graph --all'
+alias gd='git diff'
+alias gb='git branch -a'
+
+# directory jump (z plugin)
+alias j='z'
+
+# nvim
+alias vim='nvim'
+alias vi='nvim'
