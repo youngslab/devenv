@@ -67,7 +67,8 @@ lazygit
 - `<Space>ff` - 파일 찾기 (Telescope)
 - `<Space>fw` - 텍스트 검색 (live grep)
 - `<Space>gg` - lazygit 열기
-- `<C-\>` - 터미널 토글
+- `<C-\>` - 터미널 토글 (toggleterm)
+- `<Esc>` - 터미널 모드에서 normal mode로 전환
 
 ### AI 단축키
 
@@ -83,6 +84,18 @@ lazygit
 claude           # Claude Code 인증 (터미널에서)
 gh auth login    # GitHub CLI 인증
 ```
+
+### 클립보드 (OSC 52)
+
+tmux 내에서도 시스템 클립보드로 복사가 가능합니다.
+
+- `"+y` - 시스템 클립보드로 복사 (visual mode에서)
+- `Cmd+V` - 호스트에서 붙여넣기
+
+**요구사항**: 호스트 터미널이 OSC 52를 지원해야 함
+- iTerm2: Preferences → General → Selection → "Applications in terminal may access clipboard" 체크
+- Windows Terminal, Alacritty: 기본 지원
+- macOS Terminal.app: 미지원
 
 ### AstroNvim 설정 커스터마이징
 
