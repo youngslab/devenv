@@ -36,6 +36,16 @@ if [ ! -d "$HOME/.config/nvim" ]; then
 fi
 
 # ========================================
+# SuperClaude 설치 (Claude Code 확장 프레임워크)
+# ========================================
+if ! command -v superclaude &> /dev/null; then
+  echo "Installing SuperClaude..."
+  pipx install superclaude 2>/dev/null
+  export PATH="$HOME/.local/bin:$PATH"
+  superclaude install 2>/dev/null || true
+fi
+
+# ========================================
 # Symlink dotfiles (컨테이너 설정으로 override)
 # ========================================
 if [ -d "$DOTFILES_DIR" ]; then

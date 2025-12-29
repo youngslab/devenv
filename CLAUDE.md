@@ -42,9 +42,10 @@ docker run -it --rm \
 - Git: lazygit, GitHub CLI (gh)
 - Dev tools: build-essential, cmake, python3, nodejs/npm
 - Search: ripgrep, fzf, ctags, cscope
-- AI: Claude Code, GitHub Copilot, claudecode.nvim
+- AI: Claude Code, SuperClaude, GitHub Copilot, claudecode.nvim
 - LSP: clangd (C/C++), pyright (Python)
 - Linter/Formatter: clang-format, black, ruff
+- Browser Automation: Chrome, VNC/noVNC
 
 **참고**: 호스트 터미널에서도 Nerd Font를 설정해야 아이콘이 정상 표시됩니다.
 
@@ -77,6 +78,28 @@ lazygit
 - `<Tab>` - Copilot 제안 수락
 - `<Alt-]>` / `<Alt-[>` - Copilot 다음/이전 제안
 
+### SuperClaude 명령어
+
+SuperClaude는 Claude Code를 확장하는 프레임워크입니다. 30개의 슬래시 명령어와 9개의 페르소나를 제공합니다.
+
+```bash
+# 주요 명령어 (Claude Code 내에서)
+/build           # 프로젝트 빌드
+/test            # 테스트 실행
+/review          # 코드 리뷰
+/refactor        # 리팩토링
+/debug           # 디버깅 모드
+/explain         # 코드 설명
+/document        # 문서화
+/security        # 보안 분석
+
+# 페르소나 모드
+/persona:architect   # 아키텍트 모드
+/persona:reviewer    # 리뷰어 모드
+```
+
+자세한 내용: https://github.com/SuperClaude-Org/SuperClaude_Framework
+
 ### 첫 실행 시 인증
 
 ```bash
@@ -102,4 +125,49 @@ tmux 내에서도 시스템 클립보드로 복사가 가능합니다.
 설정 파일 위치: `~/.config/nvim/lua/`
 - `plugins/` - 추가 플러그인 설정
 - `polish.lua` - 추가 설정
+
+## VNC + Chrome (OAuth 인증용)
+
+브라우저 자동화를 위한 Chrome과 VNC가 내장되어 있습니다.
+
+```bash
+# 서비스 시작
+vnc-server start
+
+# 접속 포트
+# - 5900: VNC (전용 클라이언트)
+# - 7900: noVNC (웹 브라우저에서 http://localhost:7900)
+```
+
+Chrome 실행:
+```bash
+# VNC 시작 후 Chrome 실행
+vnc-server start
+DISPLAY=:99 google-chrome --no-sandbox
+
+# http://localhost:7900 에서 브라우저 화면 확인 가능
+```
+
+## Known Issues
+
+### devenv-snt 통합 불가
+
+회사 빌드 환경(Dockerfile_snt)과 devenv 통합을 시도했으나 실패했습니다.
+
+**원인: 기본 이미지 및 컴파일러 버전 불일치**
+
+| 항목 | devenv | Dockerfile_snt |
+|------|--------|----------------|
+| Ubuntu | 24.04 | 22.04 |
+| GCC | 13 | 10, 11 |
+| Clang | 18 | 15 |
+| Node.js | 22 | 18 |
+| OpenSSL | 3.x | 1.1.1 (다운그레이드) |
+
+**주요 호환성 문제:**
+- 회사 프로젝트는 gcc-10/11, clang-15 기준으로 빌드됨
+- OpenSSL 1.1.1이 필수 (Ubuntu 24.04는 3.x 기본)
+- 특정 라이브러리들이 Ubuntu 22.04 전용 패키지 사용
+
+**결론:** 두 환경은 별도로 유지해야 함. 회사 빌드는 기존 Dockerfile_snt 사용.
 
