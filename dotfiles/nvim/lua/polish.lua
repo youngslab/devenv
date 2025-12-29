@@ -85,8 +85,6 @@ vim.api.nvim_create_autocmd("ColorScheme", {
 })
 vim.defer_fn(function() vim.cmd("doautocmd ColorScheme") end, 50)
 
--- Terminal mode: Esc to exit to normal mode
-vim.keymap.set('t', '<Esc>', [[<C-\><C-n>]], { desc = "Exit terminal mode" })
 
 -- Disable AstroNvim default split mappings
 vim.keymap.del('n', '\\')
