@@ -10,17 +10,43 @@ ARG GID=1000
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       sudo ca-certificates curl wget git tzdata locales openssh-client \
-      zsh tmux ripgrep less unzip fontconfig \
+      zsh ripgrep less unzip fontconfig \
       universal-ctags cscope repo docker.io \
       build-essential cmake pkg-config \
       python3 python3-pip python3-venv \
-      xclip \
+      xclip libevent-dev libncurses-dev bison \
     && rm -rf /var/lib/apt/lists/*
+
+# tmux 최신 버전 설치 (3.5+ for extended-keys-format)
+RUN TMUX_VERSION=$(curl -s "https://api.github.com/repos/tmux/tmux/releases/latest" | grep -Po '"tag_name": "\K[^"]*') && \
+    curl -Lo /tmp/tmux.tar.gz "https://github.com/tmux/tmux/releases/download/${TMUX_VERSION}/tmux-${TMUX_VERSION}.tar.gz" && \
+    cd /tmp && tar -xzf tmux.tar.gz && \
+    cd tmux-${TMUX_VERSION} && ./configure && make && make install && \
+    cd / && rm -rf /tmp/tmux*
 
 # Node.js 22 설치 (Copilot 요구사항)
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/*
+
+# Google Chrome + VNC 설치 (OAuth 인증용)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      gnupg \
+      libnss3 libxss1 libasound2t64 libatk-bridge2.0-0 libgtk-3-0 libgbm1 \
+      fonts-liberation xdg-utils \
+      xvfb x11vnc fluxbox \
+    && rm -rf /var/lib/apt/lists/* && \
+    # Chrome 설치
+    curl -fsSL https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg && \
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list && \
+    apt-get update && \
+    apt-get install -y google-chrome-stable && \
+    rm -rf /var/lib/apt/lists/* && \
+    # noVNC 설치 (웹 브라우저로 VNC 접속)
+    git clone --depth 1 https://github.com/novnc/noVNC /opt/noVNC && \
+    git clone --depth 1 https://github.com/novnc/websockify /opt/noVNC/utils/websockify && \
+    ln -s /opt/noVNC/vnc.html /opt/noVNC/index.html
 
 # fzf 최신 버전 설치 (apt 버전은 오래됨)
 RUN FZF_VERSION=$(curl -s "https://api.github.com/repos/junegunn/fzf/releases/latest" | grep -Po '"tag_name": "v?\K[^"]*') && \
@@ -55,6 +81,9 @@ RUN GH_VERSION=$(curl -s "https://api.github.com/repos/cli/cli/releases/latest" 
 
 # Claude Code CLI 설치
 RUN npm install -g @anthropic-ai/claude-code
+
+# pipx 설치 (SuperClaude용)
+RUN pip install --break-system-packages pipx
 
 # Nerd Font 설치 (JetBrainsMono)
 RUN mkdir -p /usr/share/fonts/nerd-fonts && \
@@ -99,9 +128,10 @@ RUN set -eux; \
     echo "%sudo ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/90-nopasswd-sudo && \
     chmod 0440 /etc/sudoers.d/90-nopasswd-sudo
 
-# entrypoint 스크립트 복사
+# 스크립트 복사
 COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+COPY scripts/vnc-server /usr/local/bin/vnc-server
+RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/vnc-server
 
 USER ${USERNAME}
 WORKDIR /home/${USERNAME}
