@@ -80,6 +80,16 @@ return {
           -- Clear search highlight
           ["<Esc>"] = { "<cmd>nohlsearch<CR>", desc = "Clear search highlight" },
 
+          -- Toggle terminal mode (enter insert mode if in terminal buffer)
+          ["<C-,>"] = {
+            function()
+              if vim.bo.buftype == "terminal" then
+                vim.cmd("startinsert")
+              end
+            end,
+            desc = "Enter terminal mode",
+          },
+
           -- Better line navigation
           ["j"] = { "v:count == 0 ? 'gj' : 'j'", expr = true, silent = true },
           ["k"] = { "v:count == 0 ? 'gk' : 'k'", expr = true, silent = true },
@@ -108,7 +118,7 @@ return {
         },
         t = {
           -- Exit terminal mode (normal mode로 전환)
-          ["<C-q>"] = { "<C-\\><C-n>", desc = "Exit terminal mode" },
+          ["<C-,>"] = { "<C-\\><C-n>", desc = "Exit terminal mode" },
           -- Terminal mode window navigation
           ["<C-h>"] = { "<C-\\><C-n><C-w>h", desc = "Move to left window" },
           ["<C-j>"] = { "<C-\\><C-n><C-w>j", desc = "Move to lower window" },
@@ -186,7 +196,7 @@ return {
       { "<leader>ac", "<cmd>ClaudeCode<cr>", desc = "Toggle Claude" },
       { "<leader>af", "<cmd>ClaudeCodeFocus<cr>", desc = "Focus Claude" },
       { "<C-=>", "<cmd>ClaudeCode<cr>", desc = "Toggle Claude", mode = { "n", "t", "i" } },
-      { "<C-CR>", "<cmd>ClaudeCode<cr>", desc = "Toggle Claude", mode = { "n", "t", "i" } },
+      { "<F1>", "<cmd>ClaudeCode<cr>", desc = "Toggle Claude", mode = { "n", "t", "i" } },
     },
   },
 
@@ -280,8 +290,8 @@ return {
   {
     "szw/vim-maximizer",
     keys = {
-      { "<C-z>", "<cmd>MaximizerToggle<CR>", desc = "Zoom window toggle", mode = { "n", "i", "v" } },
-      { "<C-z>", "<C-\\><C-n><cmd>MaximizerToggle<CR>i", desc = "Zoom window toggle", mode = "t" },
+      { "<C-m>", "<cmd>MaximizerToggle<CR>", desc = "Zoom window toggle", mode = { "n", "i", "v" } },
+      { "<C-m>", "<C-\\><C-n><cmd>MaximizerToggle<CR>i", desc = "Zoom window toggle", mode = "t" },
     },
   },
 }
