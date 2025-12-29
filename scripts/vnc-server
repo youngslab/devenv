@@ -1,0 +1,111 @@
+#!/bin/bash
+# VNC Server 실행 스크립트 (Chrome + noVNC)
+# 사용법: vnc-server [start|stop|status]
+#
+# 포트:
+#   5900 - VNC (전용 클라이언트)
+#   7900 - noVNC (웹 브라우저)
+
+export DISPLAY=:99
+SCREEN_WIDTH=${SCREEN_WIDTH:-1920}
+SCREEN_HEIGHT=${SCREEN_HEIGHT:-1080}
+SCREEN_DEPTH=${SCREEN_DEPTH:-24}
+
+PIDDIR="/tmp/vnc"
+mkdir -p "$PIDDIR"
+
+start_xvfb() {
+    if [ -f "$PIDDIR/xvfb.pid" ] && kill -0 "$(cat "$PIDDIR/xvfb.pid")" 2>/dev/null; then
+        return 0
+    fi
+    echo "Starting Xvfb on display :99..."
+    Xvfb :99 -screen 0 ${SCREEN_WIDTH}x${SCREEN_HEIGHT}x${SCREEN_DEPTH} -ac &
+    echo $! > "$PIDDIR/xvfb.pid"
+    sleep 1
+}
+
+start_fluxbox() {
+    if [ -f "$PIDDIR/fluxbox.pid" ] && kill -0 "$(cat "$PIDDIR/fluxbox.pid")" 2>/dev/null; then
+        return 0
+    fi
+    echo "Starting Fluxbox window manager..."
+    fluxbox -display :99 > /dev/null 2>&1 &
+    echo $! > "$PIDDIR/fluxbox.pid"
+    sleep 1
+}
+
+start_vnc() {
+    if [ -f "$PIDDIR/vnc.pid" ] && kill -0 "$(cat "$PIDDIR/vnc.pid")" 2>/dev/null; then
+        return 0
+    fi
+    echo "Starting VNC server on port 5900..."
+    x11vnc -display :99 -forever -shared -rfbport 5900 -nopw -quiet &
+    echo $! > "$PIDDIR/vnc.pid"
+    sleep 1
+}
+
+start_novnc() {
+    if [ -f "$PIDDIR/novnc.pid" ] && kill -0 "$(cat "$PIDDIR/novnc.pid")" 2>/dev/null; then
+        return 0
+    fi
+    echo "Starting noVNC on port 7900..."
+    /opt/noVNC/utils/novnc_proxy --vnc localhost:5900 --listen 7900 > /dev/null 2>&1 &
+    echo $! > "$PIDDIR/novnc.pid"
+    sleep 1
+}
+
+start() {
+    start_xvfb
+    start_fluxbox
+    start_vnc
+    start_novnc
+
+    echo ""
+    echo "=== VNC Server Started ==="
+    echo "VNC:    vnc://localhost:5900 (no password)"
+    echo "noVNC:  http://localhost:7900"
+    echo ""
+    echo "Chrome: DISPLAY=:99 google-chrome --no-sandbox"
+    echo ""
+}
+
+stop() {
+    echo "Stopping services..."
+    for service in novnc vnc fluxbox xvfb; do
+        if [ -f "$PIDDIR/$service.pid" ]; then
+            PID=$(cat "$PIDDIR/$service.pid")
+            if kill -0 "$PID" 2>/dev/null; then
+                kill "$PID" 2>/dev/null
+                echo "  Stopped $service (PID: $PID)"
+            fi
+            rm -f "$PIDDIR/$service.pid"
+        fi
+    done
+    echo "All services stopped"
+}
+
+status() {
+    echo "=== Service Status ==="
+    for service in xvfb fluxbox vnc novnc; do
+        if [ -f "$PIDDIR/$service.pid" ] && kill -0 "$(cat "$PIDDIR/$service.pid")" 2>/dev/null; then
+            echo "  $service: running (PID: $(cat "$PIDDIR/$service.pid"))"
+        else
+            echo "  $service: stopped"
+        fi
+    done
+    echo ""
+    echo "Ports:"
+    echo "  5900 - VNC"
+    echo "  7900 - noVNC (web browser)"
+}
+
+case "${1:-start}" in
+    start)   start ;;
+    stop)    stop ;;
+    status)  status ;;
+    restart) stop; sleep 1; start ;;
+    *)
+        echo "Usage: vnc-server [start|stop|status|restart]"
+        exit 1
+        ;;
+esac

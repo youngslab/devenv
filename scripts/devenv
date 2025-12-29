@@ -11,6 +11,11 @@ DOTFILES_DIR="$HOME/workspace/devenv/dotfiles"
 SAFE_USERNAME="${USERNAME//./-}"
 HOME_VOLUME="devenv-home-${SAFE_USERNAME}"
 
+# 마운트할 디렉토리 미리 생성 (없으면 Docker가 root로 생성해서 권한 문제 발생)
+mkdir -p "$HOME/.claude"
+mkdir -p "$HOME/.config/gh"
+mkdir -p "$HOME/.config/github-copilot"
+
 # 이미 실행 중이면 exec으로 접속
 if docker ps --format '{{.Names}}' | grep -q "^devenv$"; then
   echo "Attaching to running container..."
@@ -44,6 +49,9 @@ docker run -it --rm \
   $GROUP_OPTS \
   -e HOME="/home/${USERNAME}" \
   -e USER="${USERNAME}" \
+  -p 5900:5900 \
+  -p 7900:7900 \
+  --shm-size="2g" \
   -v "${HOME_VOLUME}:/home/${USERNAME}" \
   -v "$WORKSPACE_DIR:/home/$USERNAME/workspace" \
   -v "$DOTFILES_DIR:/home/$USERNAME/.dotfiles" \
