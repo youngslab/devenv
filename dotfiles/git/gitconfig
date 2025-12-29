@@ -25,3 +25,8 @@
 
 [pull]
     rebase = false
+
+# Machine-specific settings (user.name, user.email, etc.)
+# Create ~/.gitconfig.local on each machine
+[include]
+    path = ~/.gitconfig.local
