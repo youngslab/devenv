@@ -47,6 +47,7 @@ return {
           -- Misc
           showmode = false,
           completeopt = { "menu", "menuone", "noselect" },
+
         },
       },
       mappings = {
@@ -81,7 +82,7 @@ return {
           ["<Esc>"] = { "<cmd>nohlsearch<CR>", desc = "Clear search highlight" },
 
           -- Toggle terminal mode (enter insert mode if in terminal buffer)
-          ["<C-,>"] = {
+          ["<C-x>"] = {
             function()
               if vim.bo.buftype == "terminal" then
                 vim.cmd("startinsert")
@@ -118,7 +119,7 @@ return {
         },
         t = {
           -- Exit terminal mode (normal mode로 전환)
-          ["<C-,>"] = { "<C-\\><C-n>", desc = "Exit terminal mode" },
+          ["<C-x>"] = { "<C-\\><C-n>", desc = "Exit terminal mode" },
           -- Terminal mode window navigation
           ["<C-h>"] = { "<C-\\><C-n><C-w>h", desc = "Move to left window" },
           ["<C-j>"] = { "<C-\\><C-n><C-w>j", desc = "Move to lower window" },
@@ -182,12 +183,14 @@ return {
     dependencies = { "folke/snacks.nvim" },
     config = function()
       require("claudecode").setup()
-      -- Claude Code 터미널에 돌아올 때 자동으로 insert mode
+      -- 모든 터미널 버퍼에 돌아올 때 자동으로 insert mode
       vim.api.nvim_create_autocmd({ "BufEnter", "WinEnter" }, {
-        pattern = "term://*:claude",
+        pattern = "term://*",
         callback = function()
           vim.schedule(function()
-            vim.cmd("startinsert")
+            if vim.bo.buftype == "terminal" then
+              vim.cmd("startinsert")
+            end
           end)
         end,
       })
@@ -206,7 +209,7 @@ return {
     version = "*",
     opts = {
       size = 15,
-      open_mapping = [[<C-\>]],
+      open_mapping = [[<F2>]],
       direction = "horizontal",  -- horizontal, vertical, float, tab
       shade_terminals = true,
       shading_factor = 2,
@@ -215,8 +218,8 @@ return {
       shell = "/usr/bin/zsh",
     },
     keys = {
-      { "<C-\\>", "<cmd>ToggleTerm<cr>", desc = "Toggle terminal" },
-      { "<C-\\>", "<cmd>ToggleTerm<cr>", mode = "t", desc = "Toggle terminal" },
+      { "<F2>", "<cmd>ToggleTerm<cr>", desc = "Toggle terminal" },
+      { "<F2>", "<cmd>ToggleTerm<cr>", mode = "t", desc = "Toggle terminal" },
       { "<leader>tt", "<cmd>ToggleTerm<cr>", desc = "Toggle terminal" },
       { "<leader>tf", "<cmd>ToggleTerm direction=float<cr>", desc = "Float terminal" },
       { "<leader>tv", "<cmd>ToggleTerm direction=vertical size=80<cr>", desc = "Vertical terminal" },
@@ -224,7 +227,7 @@ return {
     },
   },
 
-  -- GitHub Copilot
+  -- GitHub Copilot (ghost text + cmp 하이브리드)
   {
     "zbirenbaum/copilot.lua",
     cmd = "Copilot",
@@ -233,8 +236,9 @@ return {
       suggestion = {
         enabled = true,
         auto_trigger = true,
+        debounce = 75,
         keymap = {
-          accept = "<Tab>",
+          accept = "<C-l>",           -- Ctrl+l로 ghost text 수락
           accept_word = "<C-Right>",
           accept_line = "<C-End>",
           next = "<M-]>",
@@ -246,52 +250,109 @@ return {
       filetypes = {
         markdown = true,
         yaml = true,
+        gitcommit = true,
       },
     },
   },
 
-  -- Hydra: 연속 키 입력 모드 (window resize 등)
+  -- Copilot CMP integration
   {
-    "nvimtools/hydra.nvim",
+    "zbirenbaum/copilot-cmp",
+    dependencies = { "zbirenbaum/copilot.lua" },
+    event = "InsertEnter",
     config = function()
-      local Hydra = require("hydra")
+      require("copilot_cmp").setup()
+    end,
+  },
 
-      Hydra({
-        name = "Window resize",
-        mode = "n",
-        body = "<C-w>",
-        heads = {
-          { ">", "<C-w>>", { desc = "width +" } },
-          { "<", "<C-w><", { desc = "width -" } },
-          { "+", "<C-w>+", { desc = "height +" } },
-          { "-", "<C-w>-", { desc = "height -" } },
-          { "=", "<C-w>=", { desc = "equalize" } },
-          { "h", "<C-w>h", { desc = "left" } },
-          { "j", "<C-w>j", { desc = "down" } },
-          { "k", "<C-w>k", { desc = "up" } },
-          { "l", "<C-w>l", { desc = "right" } },
-          { "q", nil, { exit = true, desc = "exit" } },
-          { "<Esc>", nil, { exit = true, desc = false } },
-        },
-        config = {
-          color = "pink",
-          invoke_on_body = true,
-          hint = {
-            type = "window",
-            position = "middle",
-            border = "rounded",
-          },
-        },
-      })
+  -- nvim-cmp: Copilot 통합 + 정렬 + 아이콘
+  {
+    "hrsh7th/nvim-cmp",
+    optional = true,
+    dependencies = { "zbirenbaum/copilot-cmp" },
+    config = function(_, opts)
+      local cmp = require("cmp")
+
+      -- Copilot 소스 추가 (최상단)
+      table.insert(opts.sources, 1, { name = "copilot", group_index = 1, priority = 100 })
+
+      -- Tab은 Copilot ghost text 전용, CMP에서 제거
+      opts.mapping["<Tab>"] = nil
+      opts.mapping["<S-Tab>"] = nil
+      opts.mapping["<C-Space>"] = cmp.mapping.complete()
+
+      -- Copilot 제안을 최상단에 정렬
+      opts.sorting = opts.sorting or {}
+      opts.sorting.comparators = {
+        require("copilot_cmp.comparators").prioritize,
+        cmp.config.compare.offset,
+        cmp.config.compare.exact,
+        cmp.config.compare.score,
+        cmp.config.compare.recently_used,
+        cmp.config.compare.locality,
+        cmp.config.compare.kind,
+        cmp.config.compare.sort_text,
+        cmp.config.compare.length,
+        cmp.config.compare.order,
+      }
+
+      -- Copilot 아이콘 표시
+      local kind_icons = {
+        Copilot = "",
+        Text = "󰉿",
+        Method = "󰆧",
+        Function = "󰊕",
+        Constructor = "",
+        Field = "󰜢",
+        Variable = "󰀫",
+        Class = "󰠱",
+        Interface = "",
+        Module = "",
+        Property = "󰜢",
+        Unit = "󰑭",
+        Value = "󰎠",
+        Enum = "",
+        Keyword = "󰌋",
+        Snippet = "",
+        Color = "󰏘",
+        File = "󰈙",
+        Reference = "󰈇",
+        Folder = "󰉋",
+        EnumMember = "",
+        Constant = "󰏿",
+        Struct = "󰙅",
+        Event = "",
+        Operator = "󰆕",
+        TypeParameter = "",
+      }
+
+      opts.formatting = opts.formatting or {}
+      opts.formatting.format = function(entry, vim_item)
+        vim_item.kind = string.format("%s %s", kind_icons[vim_item.kind] or "", vim_item.kind)
+        vim_item.menu = ({
+          copilot = "[Copilot]",
+          nvim_lsp = "[LSP]",
+          luasnip = "[Snippet]",
+          buffer = "[Buffer]",
+          path = "[Path]",
+        })[entry.source.name] or ""
+        return vim_item
+      end
+
+      cmp.setup(opts)
+
+      -- Copilot 하이라이트 색상
+      vim.api.nvim_set_hl(0, "CmpItemKindCopilot", { fg = "#6CC644" })
     end,
   },
 
   -- Window zoom toggle
   {
     "szw/vim-maximizer",
+    lazy = false,  -- 즉시 로드 (F10이 처음부터 작동하도록)
     keys = {
-      { "<C-m>", "<cmd>MaximizerToggle<CR>", desc = "Zoom window toggle", mode = { "n", "i", "v" } },
-      { "<C-m>", "<C-\\><C-n><cmd>MaximizerToggle<CR>i", desc = "Zoom window toggle", mode = "t" },
+      { "<F10>", "<cmd>MaximizerToggle<CR>", desc = "Zoom window toggle", mode = { "n", "i", "v" } },
+      { "<F10>", "<C-\\><C-n><cmd>MaximizerToggle<CR>i", desc = "Zoom window toggle", mode = "t" },
     },
   },
 }

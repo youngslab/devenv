@@ -40,12 +40,13 @@ docker run -it --rm \
 - Editor: Neovim (latest) with AstroNvim
 - Font: JetBrainsMono Nerd Font (아이콘 표시용)
 - Git: lazygit, GitHub CLI (gh)
-- Dev tools: build-essential, cmake, python3, nodejs/npm
+- Dev tools: build-essential, cmake, python3, nodejs 22
 - Search: ripgrep, fzf, ctags, cscope
 - AI: Claude Code, SuperClaude, GitHub Copilot, claudecode.nvim
 - LSP: clangd (C/C++), pyright (Python)
 - Linter/Formatter: clang-format, black, ruff
 - Browser Automation: Chrome, VNC/noVNC
+- Container: Docker-in-Docker support
 
 **참고**: 호스트 터미널에서도 Nerd Font를 설정해야 아이콘이 정상 표시됩니다.
 
@@ -68,13 +69,15 @@ lazygit
 - `<Space>ff` - 파일 찾기 (Telescope)
 - `<Space>fw` - 텍스트 검색 (live grep)
 - `<Space>gg` - lazygit 열기
-- `<C-\>` - 터미널 토글 (toggleterm)
-- `<C-q>` - 터미널 모드에서 normal mode로 전환
+- `<F2>` - 터미널 토글 (toggleterm)
+- `<C-x>` - 터미널 모드에서 normal mode로 전환
+- `<F10>` - 윈도우 줌 토글
 
 ### AI 단축키
 
 - `<Space>ac` - Claude Code 토글
 - `<Space>af` - Claude Code 포커스
+- `<C-=>` / `<F1>` - Claude Code 토글 (모든 모드)
 - `<Tab>` - Copilot 제안 수락
 - `<Alt-]>` / `<Alt-[>` - Copilot 다음/이전 제안
 
@@ -170,4 +173,3 @@ DISPLAY=:99 google-chrome --no-sandbox
 - 특정 라이브러리들이 Ubuntu 22.04 전용 패키지 사용
 
 **결론:** 두 환경은 별도로 유지해야 함. 회사 빌드는 기존 Dockerfile_snt 사용.
-

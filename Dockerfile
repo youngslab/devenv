@@ -10,9 +10,9 @@ ARG GID=1000
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       sudo ca-certificates curl wget git tzdata locales openssh-client \
-      zsh ripgrep less unzip fontconfig \
+      zsh ripgrep less unzip fontconfig iputils-ping file \
       universal-ctags cscope repo docker.io \
-      build-essential cmake pkg-config \
+      build-essential cmake ninja-build pkg-config \
       python3 python3-pip python3-venv \
       xclip libevent-dev libncurses-dev bison \
     && rm -rf /var/lib/apt/lists/*

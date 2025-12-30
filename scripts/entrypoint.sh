@@ -2,6 +2,9 @@
 # DevEnv container entrypoint
 # Sets up symlinks and configurations on container start
 
+# HOME이 설정되지 않은 경우 설정
+export HOME="${HOME:-$(getent passwd "$(id -u)" | cut -d: -f6)}"
+
 DOTFILES_DIR="$HOME/.dotfiles"
 
 # ========================================
@@ -38,11 +41,14 @@ fi
 # ========================================
 # SuperClaude 설치 (Claude Code 확장 프레임워크)
 # ========================================
-if ! command -v superclaude &> /dev/null; then
+export PATH="$HOME/.local/bin:$PATH"
+if [ ! -d "$HOME/.local/share/pipx/venvs/superclaude" ]; then
   echo "Installing SuperClaude..."
-  pipx install superclaude 2>/dev/null
-  export PATH="$HOME/.local/bin:$PATH"
-  superclaude install 2>/dev/null || true
+  pipx install superclaude 2>/dev/null || true
+fi
+# 명령어 설치 (없으면만)
+if [ ! -d "$HOME/.claude/commands/sc" ]; then
+  superclaude install >/dev/null 2>&1 || true
 fi
 
 # ========================================

@@ -1,7 +1,10 @@
 #!/bin/bash
 # DevEnv container launcher
+# - 백그라운드에서 실행되어 SSH 세션 종료 후에도 유지
+# - 자동 재시작 (unless-stopped)
 
 IMAGE_NAME="devenv"
+CONTAINER_NAME="devenv"
 USERNAME=$(whoami)
 WORKSPACE_DIR="$HOME/workspace"
 DOTFILES_DIR="$HOME/workspace/devenv/dotfiles"
@@ -17,9 +20,16 @@ mkdir -p "$HOME/.config/gh"
 mkdir -p "$HOME/.config/github-copilot"
 
 # 이미 실행 중이면 exec으로 접속
-if docker ps --format '{{.Names}}' | grep -q "^devenv$"; then
-  echo "Attaching to running container..."
-  exec docker exec -it --user "$(id -u):$(id -g)" devenv zsh
+if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+  exec docker exec -it --user "$(id -u):$(id -g)" "$CONTAINER_NAME" "${@:-zsh}"
+fi
+
+# 중지된 컨테이너가 있으면 시작 후 접속
+if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+  echo "Starting stopped container..."
+  docker start "$CONTAINER_NAME"
+  sleep 1
+  exec docker exec -it --user "$(id -u):$(id -g)" "$CONTAINER_NAME" "${@:-zsh}"
 fi
 
 # Volume 초기화 (비어있으면 권한 설정)
@@ -34,7 +44,6 @@ docker run --rm \
   "$IMAGE_NAME" \
   chown -R "$(id -u):$(id -g)" "/home/${USERNAME}" 2>/dev/null
 
-# Run container
 # Docker 그룹 GID (호스트)
 DOCKER_GID=$(getent group docker 2>/dev/null | cut -d: -f3)
 
@@ -42,10 +51,14 @@ DOCKER_GID=$(getent group docker 2>/dev/null | cut -d: -f3)
 GROUP_OPTS="--group-add sudo"
 [ -n "$DOCKER_GID" ] && GROUP_OPTS="$GROUP_OPTS --group-add $DOCKER_GID"
 
-docker run -it --rm \
-  --name devenv \
+echo "Starting devenv container in background..."
+
+# 백그라운드로 컨테이너 실행 (tail -f로 유지)
+docker run -d \
+  --name "$CONTAINER_NAME" \
   --hostname "$(hostname -s)" \
   --user "$(id -u):$(id -g)" \
+  --restart unless-stopped \
   $GROUP_OPTS \
   -e HOME="/home/${USERNAME}" \
   -e USER="${USERNAME}" \
@@ -58,7 +71,14 @@ docker run -it --rm \
   -v "$HOME/.claude:/home/$USERNAME/.claude" \
   -v "$HOME/.config/gh:/home/$USERNAME/.config/gh" \
   -v "$HOME/.config/github-copilot:/home/$USERNAME/.config/github-copilot" \
-  -v "$HOME/.ssh:/home/$USERNAME/.ssh:ro" \
+  -v "$HOME/.ssh:/home/$USERNAME/.ssh" \
   -v "$HOME/.gnupg:/home/$USERNAME/.gnupg:ro" \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  "$IMAGE_NAME" "$@"
+  "$IMAGE_NAME" \
+  tail -f /dev/null
+
+# 컨테이너가 시작될 때까지 대기
+sleep 1
+
+# exec으로 접속
+exec docker exec -it --user "$(id -u):$(id -g)" "$CONTAINER_NAME" "${@:-zsh}"
