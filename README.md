@@ -48,10 +48,16 @@ export PATH="$HOME/workspace/devenv/scripts:$PATH"
 
 # Start container (runs in background, survives SSH disconnect)
 devenv
+
+# With VNC support (for browser automation/OAuth)
+devenv --vnc
 ```
 
 The container runs in background mode with `--restart unless-stopped`.
 It will persist even after SSH session ends.
+
+Options:
+- `--vnc` - Enable VNC ports (5900, 7900) and auto-start vnc-server
 
 ### 3. First-time Setup
 

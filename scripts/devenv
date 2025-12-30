@@ -2,10 +2,25 @@
 # DevEnv container launcher
 # - 백그라운드에서 실행되어 SSH 세션 종료 후에도 유지
 # - 자동 재시작 (unless-stopped)
+#
+# Usage: devenv [--vnc] [command]
+#   --vnc  Enable VNC ports (5900, 7900) and auto-start vnc-server
 
 IMAGE_NAME="devenv"
 CONTAINER_NAME="devenv"
 USERNAME=$(whoami)
+
+# Parse --vnc option
+VNC_ENABLED=false
+ARGS=()
+for arg in "$@"; do
+  if [ "$arg" = "--vnc" ]; then
+    VNC_ENABLED=true
+  else
+    ARGS+=("$arg")
+  fi
+done
+set -- "${ARGS[@]}"
 WORKSPACE_DIR="$HOME/workspace"
 DOTFILES_DIR="$HOME/workspace/devenv/dotfiles"
 
@@ -21,6 +36,10 @@ mkdir -p "$HOME/.config/github-copilot"
 
 # 이미 실행 중이면 exec으로 접속
 if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+  if [ "$VNC_ENABLED" = true ]; then
+    # VNC 시작 후 접속
+    docker exec --user "$(id -u):$(id -g)" "$CONTAINER_NAME" vnc-server start 2>/dev/null
+  fi
   exec docker exec -it --user "$(id -u):$(id -g)" "$CONTAINER_NAME" "${@:-zsh}"
 fi
 
@@ -29,6 +48,9 @@ if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
   echo "Starting stopped container..."
   docker start "$CONTAINER_NAME"
   sleep 1
+  if [ "$VNC_ENABLED" = true ]; then
+    docker exec --user "$(id -u):$(id -g)" "$CONTAINER_NAME" vnc-server start 2>/dev/null
+  fi
   exec docker exec -it --user "$(id -u):$(id -g)" "$CONTAINER_NAME" "${@:-zsh}"
 fi
 
@@ -51,7 +73,14 @@ DOCKER_GID=$(getent group docker 2>/dev/null | cut -d: -f3)
 GROUP_OPTS="--group-add sudo"
 [ -n "$DOCKER_GID" ] && GROUP_OPTS="$GROUP_OPTS --group-add $DOCKER_GID"
 
-echo "Starting devenv container in background..."
+# VNC 포트 옵션 (--vnc 인자가 있을 때만)
+VNC_OPTS=""
+if [ "$VNC_ENABLED" = true ]; then
+  VNC_OPTS="-p 5900:5900 -p 7900:7900 --shm-size=2g"
+  echo "Starting devenv container with VNC support..."
+else
+  echo "Starting devenv container..."
+fi
 
 # 백그라운드로 컨테이너 실행 (tail -f로 유지)
 docker run -d \
@@ -62,9 +91,7 @@ docker run -d \
   $GROUP_OPTS \
   -e HOME="/home/${USERNAME}" \
   -e USER="${USERNAME}" \
-  -p 5900:5900 \
-  -p 7900:7900 \
-  --shm-size="2g" \
+  $VNC_OPTS \
   -v "${HOME_VOLUME}:/home/${USERNAME}" \
   -v "$WORKSPACE_DIR:/home/$USERNAME/workspace" \
   -v "$DOTFILES_DIR:/home/$USERNAME/.dotfiles" \
@@ -79,6 +106,12 @@ docker run -d \
 
 # 컨테이너가 시작될 때까지 대기
 sleep 1
+
+# VNC 자동 시작 (--vnc 옵션이 있을 때)
+if [ "$VNC_ENABLED" = true ]; then
+  echo "Starting VNC server..."
+  docker exec --user "$(id -u):$(id -g)" "$CONTAINER_NAME" vnc-server start 2>/dev/null
+fi
 
 # exec으로 접속
 exec docker exec -it --user "$(id -u):$(id -g)" "$CONTAINER_NAME" "${@:-zsh}"

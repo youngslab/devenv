@@ -20,6 +20,7 @@ docker build --build-arg USERNAME=$(whoami) --build-arg UID=$(id -u) --build-arg
 # PATH에 추가: export PATH="$HOME/workspace/devenv/scripts:$PATH"
 devenv              # 기본 zsh 쉘
 devenv nvim         # nvim 직접 실행
+devenv --vnc        # VNC 포트 활성화 및 자동 시작
 
 # 방법 2: 직접 실행 (모든 auth 마운트 포함)
 docker run -it --rm \
