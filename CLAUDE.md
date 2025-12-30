@@ -78,7 +78,8 @@ lazygit
 - `<Space>ac` - Claude Code 토글
 - `<Space>af` - Claude Code 포커스
 - `<C-=>` / `<F1>` - Claude Code 토글 (모든 모드)
-- `<Tab>` - Copilot 제안 수락
+- `<C-l>` - Copilot ghost text 수락
+- `<Tab>` / `<Enter>` - Copilot CMP 메뉴 수락
 - `<Alt-]>` / `<Alt-[>` - Copilot 다음/이전 제안
 
 ### SuperClaude 명령어

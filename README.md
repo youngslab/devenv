@@ -46,9 +46,12 @@ docker build \
 # Add to PATH (add to ~/.bashrc or ~/.zshrc)
 export PATH="$HOME/workspace/devenv/scripts:$PATH"
 
-# Start container
+# Start container (runs in background, survives SSH disconnect)
 devenv
 ```
+
+The container runs in background mode with `--restart unless-stopped`.
+It will persist even after SSH session ends.
 
 ### 3. First-time Setup
 
@@ -110,7 +113,8 @@ See [devenv_cheatsheet.md](devenv_cheatsheet.md) for full keybinding reference.
 |-----|-------------|
 | `<Space>ac` | Claude Code toggle |
 | `<F1>` / `<C-=>` | Claude Code toggle |
-| `<Tab>` | Copilot accept |
+| `<C-l>` | Copilot ghost text accept |
+| `<Tab>` / `<Enter>` | Copilot CMP menu accept |
 | `<M-]>` / `<M-[>` | Copilot next/prev |
 
 ### tmux
