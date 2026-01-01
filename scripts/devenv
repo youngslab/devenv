@@ -3,22 +3,30 @@
 # - 백그라운드에서 실행되어 SSH 세션 종료 후에도 유지
 # - 자동 재시작 (unless-stopped)
 #
-# Usage: devenv [--vnc] [command]
-#   --vnc  Enable VNC ports (5900, 7900) and auto-start vnc-server
+# Usage: devenv [-f|--force] [--vnc] [command]
+#   -f, --force  Force recreate container (removes existing)
+#   --vnc        Enable VNC ports (5900, 7900) and auto-start vnc-server
 
 IMAGE_NAME="devenv"
 CONTAINER_NAME="devenv"
 USERNAME=$(whoami)
 
-# Parse --vnc option
+# Parse options
 VNC_ENABLED=false
+FORCE_RECREATE=false
 ARGS=()
 for arg in "$@"; do
-  if [ "$arg" = "--vnc" ]; then
-    VNC_ENABLED=true
-  else
-    ARGS+=("$arg")
-  fi
+  case "$arg" in
+    -f|--force)
+      FORCE_RECREATE=true
+      ;;
+    --vnc)
+      VNC_ENABLED=true
+      ;;
+    *)
+      ARGS+=("$arg")
+      ;;
+  esac
 done
 set -- "${ARGS[@]}"
 WORKSPACE_DIR="$HOME/workspace"
@@ -33,6 +41,14 @@ HOME_VOLUME="devenv-home-${SAFE_USERNAME}"
 mkdir -p "$HOME/.claude"
 mkdir -p "$HOME/.config/gh"
 mkdir -p "$HOME/.config/github-copilot"
+
+# Force recreate: 기존 컨테이너 삭제
+if [ "$FORCE_RECREATE" = true ]; then
+  if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+    echo "Removing existing container..."
+    docker rm -f "$CONTAINER_NAME" >/dev/null
+  fi
+fi
 
 # 이미 실행 중이면 exec으로 접속
 if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then

@@ -21,6 +21,7 @@ docker build --build-arg USERNAME=$(whoami) --build-arg UID=$(id -u) --build-arg
 devenv              # 기본 zsh 쉘
 devenv nvim         # nvim 직접 실행
 devenv --vnc        # VNC 포트 활성화 및 자동 시작
+devenv -f           # 기존 컨테이너 삭제 후 새로 생성 (이미지 업데이트 시)
 
 # 방법 2: 직접 실행 (모든 auth 마운트 포함)
 docker run -it --rm \
