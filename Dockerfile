@@ -11,7 +11,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       sudo ca-certificates curl wget git tzdata locales openssh-client \
       zsh ripgrep less unzip fontconfig iputils-ping file \
-      universal-ctags cscope repo docker.io \
+      universal-ctags cscope repo docker.io docker-compose-v2 \
       build-essential cmake ninja-build pkg-config \
       python3 python3-pip python3-venv \
       xclip libevent-dev libncurses-dev bison \
