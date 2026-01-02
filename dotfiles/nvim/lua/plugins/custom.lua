@@ -355,4 +355,46 @@ return {
       { "<F10>", "<C-\\><C-n><cmd>MaximizerToggle<CR>i", desc = "Zoom window toggle", mode = "t" },
     },
   },
+
+  -- Markdown 터미널 렌더링
+  {
+    "MeanderingProgrammer/render-markdown.nvim",
+    dependencies = { "nvim-treesitter/nvim-treesitter", "nvim-tree/nvim-web-devicons" },
+    ft = { "markdown" },
+    opts = {
+      enabled = true,  -- 기본 렌더링 활성화 (<leader>mr로 토글)
+      render_modes = { "n", "c" },
+      heading = {
+        enabled = true,
+        sign = true,
+        icons = { "󰲡 ", "󰲣 ", "󰲥 ", "󰲧 ", "󰲩 ", "󰲫 " },
+      },
+      code = {
+        enabled = true,
+        sign = true,
+        style = "full",
+        border = "thin",
+      },
+      bullet = {
+        enabled = true,
+        icons = { "●", "○", "◆", "◇" },
+      },
+      checkbox = {
+        enabled = true,
+        unchecked = { icon = "󰄱 " },
+        checked = { icon = "󰱒 " },
+      },
+      pipe_table = { enabled = true },
+      callout = {
+        note = { raw = "[!NOTE]", rendered = "󰋽 Note", highlight = "RenderMarkdownInfo" },
+        tip = { raw = "[!TIP]", rendered = "󰌶 Tip", highlight = "RenderMarkdownSuccess" },
+        important = { raw = "[!IMPORTANT]", rendered = "󰅾 Important", highlight = "RenderMarkdownHint" },
+        warning = { raw = "[!WARNING]", rendered = "󰀪 Warning", highlight = "RenderMarkdownWarn" },
+        caution = { raw = "[!CAUTION]", rendered = "󰳦 Caution", highlight = "RenderMarkdownError" },
+      },
+    },
+    keys = {
+      { "<leader>mr", "<cmd>RenderMarkdown toggle<cr>", desc = "Toggle Markdown render" },
+    },
+  },
 }

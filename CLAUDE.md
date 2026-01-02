@@ -74,6 +74,7 @@ lazygit
 - `<F2>` - 터미널 토글 (toggleterm)
 - `<C-x>` - 터미널 모드에서 normal mode로 전환
 - `<F10>` - 윈도우 줌 토글
+- `<Space>mr` - Markdown 렌더링 토글 (render-markdown.nvim)
 
 ### AI 단축키
 
