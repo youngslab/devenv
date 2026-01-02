@@ -107,6 +107,7 @@ docker run -d \
   $GROUP_OPTS \
   -e HOME="/home/${USERNAME}" \
   -e USER="${USERNAME}" \
+  -e CONTAINER_NAME="${CONTAINER_NAME}" \
   $VNC_OPTS \
   -v "${HOME_VOLUME}:/home/${USERNAME}" \
   -v "$WORKSPACE_DIR:/home/$USERNAME/workspace" \

@@ -30,6 +30,15 @@ cmd_exec_time() {
   [ $elapsed -gt 5 ] && echo " ${elapsed}s"
 }
 
+# Get hostname with container name if in Docker
+get_host_info() {
+  if [[ -f /.dockerenv && -n "$CONTAINER_NAME" ]]; then
+    echo "$(hostname) ($CONTAINER_NAME)"
+  else
+    echo "$(hostname)"
+  fi
+}
+
 # Store timestamp before command execution
 preexec() {
   cmd_timestamp=$(date +%s)
@@ -37,7 +46,7 @@ preexec() {
 
 # Output path, git info, hostname before each prompt
 precmd() {
-  print -P "\n%F{250}%~%F{cyan}$(parse_git_branch)%F{red}$(git_dirty)%F{237} | $(hostname)%F{yellow}$(cmd_exec_time)%f"
+  print -P "\n%F{250}%~%F{cyan}$(parse_git_branch)%F{red}$(git_dirty)%F{237} | $(get_host_info)%F{yellow}$(cmd_exec_time)%f"
 }
 
 # Prompt character (magenta on success, red on failure)
