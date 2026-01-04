@@ -92,7 +92,7 @@ GROUP_OPTS="--group-add sudo"
 # VNC 포트 옵션 (--vnc 인자가 있을 때만)
 VNC_OPTS=""
 if [ "$VNC_ENABLED" = true ]; then
-  VNC_OPTS="-p 5900:5900 -p 7900:7900 --shm-size=2g"
+  VNC_OPTS="-p 5900:5900 -p 7901:7900 --shm-size=2g"
   echo "Starting devenv container with VNC support..."
 else
   echo "Starting devenv container..."
