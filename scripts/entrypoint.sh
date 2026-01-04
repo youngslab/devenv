@@ -68,6 +68,9 @@ if [ -d "$DOTFILES_DIR" ]; then
 
   # scripts
   [ -d "$DOTFILES_DIR/scripts" ] && ln -sf "$DOTFILES_DIR/scripts" "$HOME/.scripts"
+
+  # claude commands (x prefix)
+  [ -d "$DOTFILES_DIR/claude/commands/x" ] && ln -sf "$DOTFILES_DIR/claude/commands/x" "$HOME/.claude/commands/x"
 fi
 
 # Execute the command passed to docker run
