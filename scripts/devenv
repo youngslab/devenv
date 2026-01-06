@@ -56,7 +56,7 @@ if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
     # VNC 시작 후 접속
     docker exec --user "$(id -u):$(id -g)" "$CONTAINER_NAME" vnc-server start 2>/dev/null
   fi
-  exec docker exec -it --user "$(id -u):$(id -g)" "$CONTAINER_NAME" "${@:-zsh}"
+  exec docker exec -it --detach-keys='ctrl-@' --user "$(id -u):$(id -g)" "$CONTAINER_NAME" "${@:-zsh}"
 fi
 
 # 중지된 컨테이너가 있으면 시작 후 접속
@@ -67,7 +67,7 @@ if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
   if [ "$VNC_ENABLED" = true ]; then
     docker exec --user "$(id -u):$(id -g)" "$CONTAINER_NAME" vnc-server start 2>/dev/null
   fi
-  exec docker exec -it --user "$(id -u):$(id -g)" "$CONTAINER_NAME" "${@:-zsh}"
+  exec docker exec -it --detach-keys='ctrl-@' --user "$(id -u):$(id -g)" "$CONTAINER_NAME" "${@:-zsh}"
 fi
 
 # Volume 초기화 (비어있으면 권한 설정)
@@ -130,5 +130,5 @@ if [ "$VNC_ENABLED" = true ]; then
   docker exec --user "$(id -u):$(id -g)" "$CONTAINER_NAME" vnc-server start 2>/dev/null
 fi
 
-# exec으로 접속
-exec docker exec -it --user "$(id -u):$(id -g)" "$CONTAINER_NAME" "${@:-zsh}"
+# exec으로 접속 (detach-keys 변경: Ctrl+P 충돌 방지)
+exec docker exec -it --detach-keys='ctrl-@' --user "$(id -u):$(id -g)" "$CONTAINER_NAME" "${@:-zsh}"
