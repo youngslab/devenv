@@ -21,3 +21,18 @@ alias j='z'
 alias vim='nvim'
 alias vi='nvim'
 alias v='nvim'
+
+#cd shortcuts
+alias c='cd ..'
+alias cc='cd ../..'
+alias ccc='cd ../../..'
+alias cccc='cd ../../../..'
+alias ccccc='cd ../../../../..'
+
+# resourcebot shortucts
+# Depends on resourcebot_cli projects
+alias list="resourcebot list"
+alias claim="resourcebot claim"
+alias release="resourcebot release"
+alias target="resourcebot target"
+alias tester="resourcebot tester"
