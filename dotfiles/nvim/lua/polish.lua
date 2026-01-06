@@ -1,27 +1,17 @@
 -- Custom polish settings (runs last in setup)
 
--- OSC 52 clipboard support (works in SSH/containers/tmux)
-local function osc52_copy(text)
-  local base64 = vim.base64.encode(text)
-  local osc = string.format('\x1b]52;c;%s\x07', base64)
-  -- Wrap in tmux passthrough if inside tmux
-  if vim.env.TMUX then
-    osc = string.format('\x1bPtmux;\x1b%s\x1b\\', osc)
-  end
-  io.stdout:write(osc)
-end
-
-vim.g.clipboard = {
-  name = "OSC 52 (tmux aware)",
-  copy = {
-    ["+"] = function(lines) osc52_copy(table.concat(lines, "\n")) end,
-    ["*"] = function(lines) osc52_copy(table.concat(lines, "\n")) end,
-  },
-  paste = {
-    ["+"] = function() return { vim.fn.getreg(""), vim.fn.getregtype("") } end,
-    ["*"] = function() return { vim.fn.getreg(""), vim.fn.getregtype("") } end,
-  },
-}
+-- OSC 52 clipboard via TextYankPost (does NOT interfere with normal yy/p)
+-- vim.g.clipboard causes issues on Windows Terminal, so we use autocmd instead
+-- Use "+y to copy to system clipboard
+vim.api.nvim_create_autocmd("TextYankPost", {
+  desc = "Copy to system clipboard via OSC 52 when using + register",
+  group = vim.api.nvim_create_augroup("osc52_clipboard", { clear = true }),
+  callback = function()
+    if vim.v.event.regname == "+" then
+      require("vim.ui.clipboard.osc52").copy("+")(vim.split(vim.fn.getreg("+"), "\n"))
+    end
+  end,
+})
 
 -- Highlight yanked text
 vim.api.nvim_create_autocmd("TextYankPost", {

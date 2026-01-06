@@ -33,7 +33,7 @@ return {
           sidescrolloff = 8,
 
           -- Behavior
-          clipboard = "unnamedplus",
+          -- clipboard = "unnamedplus", -- disabled: use "+y to copy to system clipboard
           undofile = true,
           swapfile = false,
           backup = false,
@@ -84,6 +84,10 @@ return {
           -- Clear search highlight
           ["<Esc>"] = { "<cmd>nohlsearch<CR>", desc = "Clear search highlight" },
 
+          -- System clipboard
+          ["<Leader>y"] = { '"+y', desc = "Copy to system clipboard" },
+          ["<Leader>Y"] = { '"+Y', desc = "Copy line to system clipboard" },
+
           -- Toggle terminal mode (enter insert mode if in terminal buffer)
           ["<C-x>"] = {
             function()
@@ -115,6 +119,7 @@ return {
           ["<A-j>"] = { ":m '>+1<CR>gv=gv", desc = "Move selection down" },
           ["<A-k>"] = { ":m '<-2<CR>gv=gv", desc = "Move selection up" },
           ["p"] = { '"_dP', desc = "Paste without yanking" },
+          ["<Leader>y"] = { '"+y', desc = "Copy to system clipboard" },
         },
         x = {
           ["<A-j>"] = { ":m '>+1<CR>gv=gv", desc = "Move selection down" },
