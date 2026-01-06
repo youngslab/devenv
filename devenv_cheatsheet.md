@@ -228,28 +228,6 @@ Prefix key: `<C-b>` (기본값)
 
 ---
 
-## Git
-
-### git 앨리어스 (gitconfig)
-
-| 앨리어스 | 명령 |
-|----------|------|
-| `git l` | `log --oneline --graph --all` |
-| `git s` | `status -s` |
-| `git b` | `branch -a` |
-| `git d` | `diff` |
-| `git ds` | `diff --staged` |
-| `git c` | `commit` |
-| `git cm` | `commit -m` |
-| `git ca` | `commit --amend` |
-| `git co` | `checkout` |
-| `git pl` | `pull` |
-| `git ph` | `push` |
-| `git a` | `add` |
-| `git aa` | `add --all` |
-
----
-
 ## DevEnv 스크립트
 
 ```bash

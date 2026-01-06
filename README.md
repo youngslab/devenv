@@ -92,7 +92,6 @@ devenv/
     ├── shell/              # Shell configuration
     │   ├── shellrc
     │   └── aliases
-    ├── git/gitconfig       # Git configuration
     └── zsh/                # Zsh theme
 ```
 

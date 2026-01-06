@@ -58,9 +58,8 @@ if [ -d "$DOTFILES_DIR" ]; then
   # zsh theme
   ln -sf "$DOTFILES_DIR/zsh/refined_fast.zsh-theme" "$HOME/.oh-my-zsh/custom/themes/refined_fast.zsh-theme" 2>/dev/null
 
-  # tmux & git
+  # tmux
   ln -sf "$DOTFILES_DIR/tmux/tmux.conf" "$HOME/.tmux.conf"
-  ln -sf "$DOTFILES_DIR/git/gitconfig" "$HOME/.gitconfig"
 
   # nvim custom settings
   ln -sf "$DOTFILES_DIR/nvim/lua/plugins/custom.lua" "$HOME/.config/nvim/lua/plugins/custom.lua"
