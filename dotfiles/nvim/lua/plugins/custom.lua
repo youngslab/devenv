@@ -52,6 +52,9 @@ return {
       },
       mappings = {
         n = {
+          -- Disable macro recording (q key)
+          ["q"] = { "<Nop>", desc = "Disable macro recording" },
+
           -- Buffer navigation
           ["H"] = { function() require("astrocore.buffer").nav(-vim.v.count1) end, desc = "Previous buffer" },
           ["L"] = { function() require("astrocore.buffer").nav(vim.v.count1) end, desc = "Next buffer" },
