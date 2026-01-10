@@ -6,6 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This repository contains a Dockerfile for building an Ubuntu 24.04-based development environment container.
 
+## Git Commits
+
+When committing changes, always use `/x:commit` instead of direct git commands.
+This ensures consistent conventional commit format with user confirmation.
+
 ## Build Commands
 
 ```bash

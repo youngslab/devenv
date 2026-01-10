@@ -29,6 +29,10 @@ for arg in "$@"; do
   esac
 done
 set -- "${ARGS[@]}"
+
+# Show MOTD banner (for SSH RemoteCommand)
+cat /etc/motd 2>/dev/null
+
 WORKSPACE_DIR="$HOME/workspace"
 DOTFILES_DIR="$HOME/workspace/devenv/dotfiles"
 
