@@ -182,7 +182,9 @@ return {
     "coder/claudecode.nvim",
     dependencies = { "folke/snacks.nvim" },
     config = function()
-      require("claudecode").setup()
+      require("claudecode").setup({
+        terminal_cmd = "claude --dangerously-skip-permissions",
+      })
       -- 모든 터미널 버퍼에 돌아올 때 자동으로 insert mode
       vim.api.nvim_create_autocmd({ "BufEnter", "WinEnter" }, {
         pattern = "term://*",
