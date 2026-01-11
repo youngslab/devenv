@@ -23,9 +23,8 @@ docker build --build-arg USERNAME=$(whoami) --build-arg UID=$(id -u) --build-arg
 ```bash
 # 방법 1: 스크립트 사용 (권장)
 # PATH에 추가: export PATH="$HOME/workspace/devenv/scripts:$PATH"
-devenv              # 기본 zsh 쉘
+devenv              # 기본 zsh 쉘 (noVNC 포트 7901 기본 활성화)
 devenv nvim         # nvim 직접 실행
-devenv --vnc        # VNC 포트 활성화 및 자동 시작
 devenv -f           # 기존 컨테이너 삭제 후 새로 생성 (이미지 업데이트 시)
 
 # 방법 2: 직접 실행 (모든 auth 마운트 포함)
@@ -52,7 +51,7 @@ docker run -it --rm \
 - AI: Claude Code, SuperClaude, GitHub Copilot, claudecode.nvim
 - LSP: clangd (C/C++), pyright (Python)
 - Linter/Formatter: clang-format, black, ruff
-- Browser Automation: Chrome, VNC/noVNC
+- Browser Automation: Chrome, noVNC (port 7901)
 - Container: Docker-in-Docker support
 
 **참고**: 호스트 터미널에서도 Nerd Font를 설정해야 아이콘이 정상 표시됩니다.
@@ -140,15 +139,15 @@ tmux 내에서도 시스템 클립보드로 복사가 가능합니다.
 
 ## VNC + Chrome (OAuth 인증용)
 
-브라우저 자동화를 위한 Chrome과 VNC가 내장되어 있습니다.
+브라우저 자동화를 위한 Chrome과 noVNC가 내장되어 있습니다.
+noVNC 포트(7901)는 기본으로 활성화됩니다.
 
 ```bash
-# 서비스 시작
+# VNC 서버 시작
 vnc-server start
 
-# 접속 포트
-# - 5900: VNC (전용 클라이언트)
-# - 7900: noVNC (웹 브라우저에서 http://localhost:7900)
+# 웹 브라우저에서 접속
+# http://localhost:7901
 ```
 
 Chrome 실행:
@@ -157,7 +156,7 @@ Chrome 실행:
 vnc-server start
 DISPLAY=:99 google-chrome --no-sandbox
 
-# http://localhost:7900 에서 브라우저 화면 확인 가능
+# http://localhost:7901 에서 브라우저 화면 확인 가능
 ```
 
 ## Known Issues
