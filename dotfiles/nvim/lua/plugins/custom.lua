@@ -152,6 +152,29 @@ return {
     },
   },
 
+  -- Neo-tree: NERDTree 스타일 검색 (/ = vim 검색, f = filter)
+  {
+    "nvim-neo-tree/neo-tree.nvim",
+    opts = {
+      window = {
+        mappings = {
+          -- / 를 vim 기본 검색으로 변경 (NERDTree 스타일)
+          ["/"] = "noop",  -- neo-tree filter 비활성화
+          ["f"] = "filter_on_submit",  -- f로 filter 사용
+        },
+      },
+    },
+    keys = {
+      -- neo-tree에서 / 누르면 vim 검색 실행
+      {
+        "/",
+        "/",
+        desc = "Search in neo-tree",
+        ft = "neo-tree",
+      },
+    },
+  },
+
   -- Mason: LSP/linter/formatter 설치
   {
     "williamboman/mason.nvim",
