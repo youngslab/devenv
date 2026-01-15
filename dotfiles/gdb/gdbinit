@@ -1,0 +1,25 @@
+# GDB Configuration for DevEnv
+# Symlinked to ~/.gdbinit by entrypoint.sh
+
+# Enable debuginfod for automatic symbol fetching
+set debuginfod enabled on
+
+# Pretty printing
+set print pretty on
+set print object on
+set print static-members on
+set print vtbl on
+set print demangle on
+set demangle-style gnu-v3
+set print sevenbit-strings off
+
+# History
+set history save on
+set history filename ~/.gdb_history
+set history size 10000
+
+# Pagination off for scripting
+set pagination off
+
+# Disable confirmation prompts
+set confirm off

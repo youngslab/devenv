@@ -15,6 +15,8 @@ RUN apt-get update && \
       build-essential cmake ninja-build pkg-config \
       python3 python3-pip python3-venv \
       xclip libevent-dev libncurses-dev bison \
+      # Debug tools (debuginfod for symbol server, heaptrack for memory profiling)
+      debuginfod elfutils heaptrack \
     && rm -rf /var/lib/apt/lists/*
 
 # tmux 최신 버전 설치 (3.5+ for extended-keys-format)

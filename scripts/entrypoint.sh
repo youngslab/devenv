@@ -73,6 +73,9 @@ if [ -d "$DOTFILES_DIR" ]; then
 
   # claude global instructions
   [ -f "$DOTFILES_DIR/claude/CLAUDE.md" ] && ln -sf "$DOTFILES_DIR/claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
+
+  # gdb config (debuginfod enabled)
+  [ -f "$DOTFILES_DIR/gdb/gdbinit" ] && ln -sf "$DOTFILES_DIR/gdb/gdbinit" "$HOME/.gdbinit"
 fi
 
 # Execute the command passed to docker run
