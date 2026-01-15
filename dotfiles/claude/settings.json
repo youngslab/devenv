@@ -246,11 +246,18 @@
     ]
   },
     "hooks": {
+    "SessionStart": [{
+      "hooks": [{
+        "type": "command",
+        "command": "~/.claude/hooks/tmux-status.sh start; tmux refresh-client -S",
+        "timeout": 5
+      }]
+    }],
     "Stop": [{
       "matcher": "*",
       "hooks": [{
         "type": "command",
-        "command": "tput bel; tmux display-message '🔐 Claude: 작업 종료'",
+        "command": "tput bel; ~/.claude/hooks/tmux-status.sh stop; tmux refresh-client -S",
         "timeout": 5
       }]
     }],
@@ -258,7 +265,22 @@
       "matcher": "*",
       "hooks": [{
         "type": "command",
-        "command": "tput bel; tmux display-message '🔐 Claude: 권한 승인 필요'",
+        "command": "tput bel; ~/.claude/hooks/tmux-status.sh attention; tmux refresh-client -S",
+        "timeout": 5
+      }]
+    }],
+    "Notification": [{
+      "matcher": "permission_prompt",
+      "hooks": [{
+        "type": "command",
+        "command": "~/.claude/hooks/tmux-status.sh attention; tmux refresh-client -S",
+        "timeout": 5
+      }]
+    }],
+    "SessionEnd": [{
+      "hooks": [{
+        "type": "command",
+        "command": "~/.claude/hooks/tmux-status.sh reset; tmux refresh-client -S",
         "timeout": 5
       }]
     }]

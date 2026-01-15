@@ -21,7 +21,8 @@
 - Use conventional commits format: `type(scope): description`
 
 ### Git Workflow
-- Use `/x:commit` command for consistent commit formatting
+- **ALWAYS use `/x:commit` skill when user requests a commit** (e.g., "commit 해줘", "커밋 작성해줘", "create a commit")
+- Do NOT use raw `git commit` commands directly - invoke the `/x:commit` skill instead
 - Branch names should match ticket numbers when applicable
 - Always run formatters before committing
 

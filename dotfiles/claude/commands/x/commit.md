@@ -1,7 +1,7 @@
 # ~/.claude/commands/commit.md
 
 ---
-description: Analyze changes, generate commit message, and commit after user confirmation
+description: "[AUTO-INVOKE] Use this skill whenever user requests a commit. Analyzes changes, generates commit message, and commits after confirmation."
 allowed-tools: Bash(git diff:*), Bash(git status:*), Bash(git add:*), Bash(git commit:*), Bash(git log:*), Read
 argument-hint: [type] [scope]
 ---
