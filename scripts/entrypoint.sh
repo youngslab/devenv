@@ -41,7 +41,7 @@ fi
 # ========================================
 # SuperClaude 설치 (Claude Code 확장 프레임워크)
 # ========================================
-export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.npm-global/bin:$HOME/.local/bin:$PATH"
 if [ ! -d "$HOME/.local/share/pipx/venvs/superclaude" ]; then
   echo "Installing SuperClaude..."
   pipx install superclaude 2>/dev/null || true

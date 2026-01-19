@@ -81,8 +81,7 @@ RUN GH_VERSION=$(curl -s "https://api.github.com/repos/cli/cli/releases/latest" 
     install gh_${GH_VERSION}_linux_amd64/bin/gh /usr/local/bin && \
     rm -rf gh.tar.gz gh_${GH_VERSION}_linux_amd64
 
-# Claude Code CLI 설치
-RUN npm install -g @anthropic-ai/claude-code
+# Claude Code CLI: 사용자 전환 후 설치 (auto-update 권한 문제 해결)
 
 # pipx 설치 (SuperClaude용)
 RUN pip install --break-system-packages pipx
@@ -137,6 +136,11 @@ RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/vnc-server
 
 USER ${USERNAME}
 WORKDIR /home/${USERNAME}
+
+# npm global prefix를 사용자 홈으로 설정 (auto-update 권한 확보)
+RUN mkdir -p ~/.npm-global && \
+    npm config set prefix '~/.npm-global' && \
+    npm install -g @anthropic-ai/claude-code
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["zsh"]

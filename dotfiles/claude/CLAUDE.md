@@ -22,7 +22,8 @@
 
 ### Git Workflow
 - **ALWAYS use `/x:commit` skill when user requests a commit** (e.g., "commit 해줘", "커밋 작성해줘", "create a commit")
-- Do NOT use raw `git commit` commands directly - invoke the `/x:commit` skill instead
+- **ALWAYS use `/x:pr` skill when user requests a PR** (e.g., "PR 만들어줘", "PR 생성해줘", "create a PR")
+- Do NOT use raw `git commit` or `gh pr create` commands directly - invoke the skills instead
 - Branch names should match ticket numbers when applicable
 - Always run formatters before committing
 
