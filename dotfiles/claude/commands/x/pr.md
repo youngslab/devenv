@@ -8,16 +8,18 @@ argument-hint: [base-branch]
 
 ## Context
 - Current branch: !`git branch --show-current`
+- Remote: !`git remote | head -1 || echo "origin"`
 - Remote tracking: !`git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null || echo "No upstream"`
-- Commits ahead: !`git log --oneline @{u}..HEAD 2>/dev/null || git log --oneline -10`
-- Changed files: !`git diff --stat @{u}..HEAD 2>/dev/null || git diff --stat main..HEAD 2>/dev/null`
+- Base branch: !`REMOTE=$(git remote | head -1); git symbolic-ref refs/remotes/$REMOTE/HEAD 2>/dev/null | sed 's@^refs/remotes/@@' || echo "$REMOTE/master"`
+- Commits ahead: !`BASE=$(REMOTE=$(git remote | head -1); git symbolic-ref refs/remotes/$REMOTE/HEAD 2>/dev/null | sed 's@^refs/remotes/@@' || echo "$REMOTE/master"); git log --oneline @{u}..HEAD 2>/dev/null || git log --oneline $BASE..HEAD 2>/dev/null || git log --oneline -5`
+- Changed files: !`BASE=$(REMOTE=$(git remote | head -1); git symbolic-ref refs/remotes/$REMOTE/HEAD 2>/dev/null | sed 's@^refs/remotes/@@' || echo "$REMOTE/master"); git diff --stat @{u}..HEAD 2>/dev/null || git diff --stat $BASE..HEAD 2>/dev/null || echo "Unable to determine changes"`
 
 ## Task
 
 ### Step 1: Validate State
 1. Check if on a feature branch (not main/master)
 2. Check if there are commits to push
-3. Identify base branch (argument or default: main)
+3. Identify base branch (argument or detect from remote's default branch)
 4. Check if remote branch exists, push if needed
 
 ### Step 2: Analyze Changes
@@ -91,9 +93,9 @@ gh pr create --title "title" --body "body" --base <base-branch> --draft
 - Maximum 100 lines for PR body
 
 ## Argument Handling
-- `$1` (base-branch): Target branch for PR (default: main)
+- `$1` (base-branch): Target branch for PR (default: auto-detect from remote)
 
 Examples:
-- `/pr` → Create PR to main
+- `/pr` → Create PR to remote's default branch (main/master)
 - `/pr develop` → Create PR to develop branch
 - `/pr release/v2` → Create PR to release/v2 branch

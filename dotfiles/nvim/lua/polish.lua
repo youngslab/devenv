@@ -80,6 +80,19 @@ vim.defer_fn(function() vim.cmd("doautocmd ColorScheme") end, 50)
 vim.keymap.del('n', '\\')
 vim.keymap.del('n', '|')
 
+-- Force disable macro recording (q) globally and in all buffers
+-- Global mapping (applies immediately on startup)
+vim.keymap.set("n", "q", "<Nop>", { silent = true, desc = "Disable macro recording" })
+
+-- Also apply per-buffer to override any plugin mappings
+vim.api.nvim_create_autocmd({ "VimEnter", "BufEnter", "FileType" }, {
+  desc = "Force disable q macro recording",
+  group = vim.api.nvim_create_augroup("disable_macro", { clear = true }),
+  callback = function()
+    vim.keymap.set("n", "q", "<Nop>", { buffer = true, silent = true })
+  end,
+})
+
 -- Filetype-specific settings
 vim.api.nvim_create_autocmd("FileType", {
   desc = "Filetype-specific settings",

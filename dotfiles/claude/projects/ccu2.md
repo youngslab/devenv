@@ -130,7 +130,14 @@ ssh $(tester)
 cd ~/integration-test-framework
 
 # Run test suite
-sudo /qatools/bin/python ./build.py --suite ./suites/ccu2_nss_suite_basic.yml
+./build.py --ignore-health --suite ./suites/ccu2_nss_suite_basic.yml
+
+# Run specific test case for NSS
+./build.py --ignore-health --test ./tests/ccu2/nss/C111.py
+
+# Run specific test case for RTA
+./build.py --ignore-health --test ./tests/ccu2/routines/SW2_VERTC_3455.py
+
 ```
 
 **Framework Setup (if not exists):**
@@ -153,6 +160,8 @@ scp ~/.ssh/id_rsa* $(tester):~/.ssh/
 - Maximum 100 lines summary
 - Clear explanation for reviewers
 - Reference related Jira tickets
+
+절대 AI agent가 코드를 작성했다는 표시를 남기지 마세요.
 
 ---
 

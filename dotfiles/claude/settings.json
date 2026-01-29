@@ -245,47 +245,73 @@
       "Read(**/*.key)"
     ]
   },
-    "hooks": {
-    "SessionStart": [{
-      "hooks": [{
-        "type": "command",
-        "command": "~/.claude/hooks/tmux-status.sh start; tmux refresh-client -S",
-        "timeout": 5
-      }]
-    }],
-    "Stop": [{
-      "matcher": "*",
-      "hooks": [{
-        "type": "command",
-        "command": "tput bel; ~/.claude/hooks/tmux-status.sh stop; tmux refresh-client -S",
-        "timeout": 5
-      }]
-    }],
-    "SubagentStop": [{
-      "matcher": "*",
-      "hooks": [{
-        "type": "command",
-        "command": "tput bel; ~/.claude/hooks/tmux-status.sh attention; tmux refresh-client -S",
-        "timeout": 5
-      }]
-    }],
-    "Notification": [{
-      "matcher": "permission_prompt",
-      "hooks": [{
-        "type": "command",
-        "command": "~/.claude/hooks/tmux-status.sh attention; tmux refresh-client -S",
-        "timeout": 5
-      }]
-    }],
-    "SessionEnd": [{
-      "hooks": [{
-        "type": "command",
-        "command": "~/.claude/hooks/tmux-status.sh reset; tmux refresh-client -S",
-        "timeout": 5
-      }]
-    }]
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/tmux-status.sh start; tmux refresh-client -S",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "tput bel; ~/.claude/hooks/tmux-status.sh stop; tmux refresh-client -S",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "tput bel; ~/.claude/hooks/tmux-status.sh attention; tmux refresh-client -S",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "permission_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/tmux-status.sh attention; tmux refresh-client -S",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/tmux-status.sh reset; tmux refresh-client -S",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "node ~/.claude/hud/omc-hud.mjs"
   },
   "enabledPlugins": {
-    "clangd-lsp@claude-plugins-official": true
+    "clangd-lsp@claude-plugins-official": true,
+    "oh-my-claudecode@omc": true,
+    "ccu2@ccu2": true
   }
 }

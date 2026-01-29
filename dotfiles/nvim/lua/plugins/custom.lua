@@ -389,6 +389,34 @@ return {
     },
   },
 
+  -- GitHub PR/Issue 관리 (octo.nvim)
+  {
+    "pwntester/octo.nvim",
+    cmd = "Octo",
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+      "nvim-telescope/telescope.nvim",
+      "nvim-tree/nvim-web-devicons",
+    },
+    opts = {
+      picker = "telescope",
+      enable_builtin = true,
+      default_merge_method = "squash",
+      mappings_disable_default = false,
+      default_remote = { "origin", "ccu", "upstream" },  -- remote 이름 우선순위
+    },
+    keys = {
+      { "<leader>oi", "<cmd>Octo issue list<cr>", desc = "List Issues" },
+      { "<leader>oI", "<cmd>Octo issue create<cr>", desc = "Create Issue" },
+      { "<leader>op", "<cmd>Octo pr list<cr>", desc = "List PRs" },
+      { "<leader>oP", "<cmd>Octo pr create<cr>", desc = "Create PR" },
+      { "<leader>oc", "<cmd>Octo pr checkout<cr>", desc = "Checkout PR" },
+      { "<leader>or", "<cmd>Octo review start<cr>", desc = "Start Review" },
+      { "<leader>os", "<cmd>Octo search<cr>", desc = "Search GitHub" },
+      { "<leader>o", desc = " Octo (GitHub)" },
+    },
+  },
+
   -- Markdown 터미널 렌더링
   {
     "MeanderingProgrammer/render-markdown.nvim",

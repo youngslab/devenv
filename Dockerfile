@@ -16,7 +16,7 @@ RUN apt-get update && \
       python3 python3-pip python3-venv \
       xclip libevent-dev libncurses-dev bison \
       # Debug tools (debuginfod for symbol server, heaptrack for memory profiling)
-      debuginfod elfutils heaptrack \
+      gdb debuginfod elfutils heaptrack \
     && rm -rf /var/lib/apt/lists/*
 
 # tmux 최신 버전 설치 (3.5+ for extended-keys-format)
@@ -85,6 +85,9 @@ RUN GH_VERSION=$(curl -s "https://api.github.com/repos/cli/cli/releases/latest" 
 
 # pipx 설치 (SuperClaude용)
 RUN pip install --break-system-packages pipx
+
+# pwndbg 설치 (GDB 확장)
+RUN curl -qsL 'https://install.pwndbg.re' | sh -s -- -t pwndbg-gdb
 
 # Nerd Font 설치 (JetBrainsMono)
 RUN mkdir -p /usr/share/fonts/nerd-fonts && \
