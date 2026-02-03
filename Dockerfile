@@ -12,7 +12,7 @@ RUN apt-get update && \
       sudo ca-certificates curl wget git tzdata locales openssh-client \
       zsh ripgrep less unzip fontconfig iputils-ping file jq \
       universal-ctags cscope repo docker.io docker-compose-v2 \
-      build-essential cmake ninja-build pkg-config \
+      build-essential cmake ninja-build pkg-config ccache \
       python3 python3-pip python3-venv \
       xclip libevent-dev libncurses-dev bison \
       # Debug tools (debuginfod for symbol server, heaptrack for memory profiling)

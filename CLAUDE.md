@@ -49,7 +49,7 @@ devenv -f           # 컨테이너 재생성 (이미지 업데이트 시)
 ### Container Features
 - Shell: zsh + oh-my-zsh, Neovim + AstroNvim
 - AI: Claude Code, SuperClaude, GitHub Copilot
-- Dev: build-essential, cmake, python3, nodejs 22
+- Dev: build-essential, cmake, ccache, python3, nodejs 22
 - LSP: clangd, pyright
 - Browser: Chrome + noVNC (port 7901)
 
