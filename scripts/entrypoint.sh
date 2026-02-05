@@ -61,8 +61,10 @@ if [ -d "$DOTFILES_DIR" ]; then
   # tmux
   ln -sf "$DOTFILES_DIR/tmux/tmux.conf" "$HOME/.tmux.conf"
 
-  # nvim custom settings
-  ln -sf "$DOTFILES_DIR/nvim/lua/plugins/custom.lua" "$HOME/.config/nvim/lua/plugins/custom.lua"
+  # nvim custom settings (모든 플러그인 파일 symlink)
+  for f in "$DOTFILES_DIR"/nvim/lua/plugins/*.lua; do
+    [ -f "$f" ] && ln -sf "$f" "$HOME/.config/nvim/lua/plugins/$(basename "$f")"
+  done
   ln -sf "$DOTFILES_DIR/nvim/lua/polish.lua" "$HOME/.config/nvim/lua/polish.lua"
 
   # scripts
