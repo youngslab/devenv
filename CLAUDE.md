@@ -53,5 +53,21 @@ devenv -f           # 컨테이너 재생성 (이미지 업데이트 시)
 - LSP: clangd, pyright
 - Browser: Chrome + noVNC (port 7901)
 
+### Neovim Plugins & Keybindings
+
+| Plugin | 키 | 기능 |
+|--------|-----|------|
+| git-worktree | `<leader>gw` | Worktree 목록 |
+| git-worktree | `<leader>gW` | Worktree 생성 |
+| diffview | `<leader>gd` | Diffview 열기 |
+| diffview | `<leader>gD` | Diffview 닫기 |
+| diffview | `<leader>gh` | 파일 히스토리 |
+| diffview | `<leader>gH` | 브랜치 히스토리 |
+| octo | `<leader>op` | PR 목록 |
+| octo | `<leader>oi` | Issue 목록 |
+| claudecode | `<C-=>`, `<F1>` | Claude 토글 |
+| toggleterm | `<F2>` | 터미널 토글 |
+| maximizer | `<F10>` | 창 줌 토글 |
+
 ### Known Issues
 devenv-snt 통합 불가: Ubuntu/컴파일러 버전 불일치 (24.04 vs 22.04)로 별도 유지 필요

@@ -81,6 +81,10 @@ RUN GH_VERSION=$(curl -s "https://api.github.com/repos/cli/cli/releases/latest" 
     install gh_${GH_VERSION}_linux_amd64/bin/gh /usr/local/bin && \
     rm -rf gh.tar.gz gh_${GH_VERSION}_linux_amd64
 
+# Atlassian CLI 설치
+RUN curl -fsSLo /usr/local/bin/acli "https://acli.atlassian.com/linux/latest/acli_linux_amd64/acli" && \
+    chmod +x /usr/local/bin/acli
+
 # Claude Code CLI: 사용자 전환 후 설치 (auto-update 권한 문제 해결)
 
 # pipx 설치 (SuperClaude용)

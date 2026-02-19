@@ -22,6 +22,9 @@ alias vim='nvim'
 alias vi='nvim'
 alias v='nvim'
 
+# claude
+alias e='claude'
+
 #cd shortcuts
 alias c='cd ..'
 alias cc='cd ../..'

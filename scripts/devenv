@@ -99,12 +99,13 @@ docker run -d \
   --hostname "$(hostname -s)" \
   --user "$(id -u):$(id -g)" \
   --restart unless-stopped \
+  --network host \
   $GROUP_OPTS \
   $ENV_FILE_ARG \
   -e HOME="/home/${USERNAME}" \
   -e USER="${USERNAME}" \
   -e CONTAINER_NAME="${CONTAINER_NAME}" \
-  -p 7901:7900 --shm-size=2g \
+  --shm-size=2g \
   -v "${HOME_VOLUME}:/home/${USERNAME}" \
   -v "$WORKSPACE_DIR:/home/$USERNAME/workspace" \
   -v "$DOTFILES_DIR:/home/$USERNAME/.dotfiles" \

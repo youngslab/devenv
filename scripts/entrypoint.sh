@@ -39,9 +39,17 @@ if [ ! -d "$HOME/.config/nvim" ]; then
 fi
 
 # ========================================
-# SuperClaude 설치 (Claude Code 확장 프레임워크)
+# Claude Code 자동 업데이트
 # ========================================
 export PATH="$HOME/.npm-global/bin:$HOME/.local/bin:$PATH"
+if command -v claude &>/dev/null; then
+  echo "Checking Claude Code updates..."
+  npm update -g @anthropic-ai/claude-code 2>/dev/null || true
+fi
+
+# ========================================
+# SuperClaude 설치 (Claude Code 확장 프레임워크)
+# ========================================
 if [ ! -d "$HOME/.local/share/pipx/venvs/superclaude" ]; then
   echo "Installing SuperClaude..."
   pipx install superclaude 2>/dev/null || true

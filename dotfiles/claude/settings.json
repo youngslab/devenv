@@ -245,6 +245,7 @@
       "Read(**/*.key)"
     ]
   },
+  "model": "claude-opus-4-5-20251101",
   "hooks": {
     "SessionStart": [
       {
@@ -313,5 +314,6 @@
     "clangd-lsp@claude-plugins-official": true,
     "oh-my-claudecode@omc": true,
     "ccu2@ccu2": true
-  }
+  },
+  "effortLevel": "low"
 }

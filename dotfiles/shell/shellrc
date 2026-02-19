@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 
 # Path
-export PATH=~/.local/bin:~/.scripts:$PATH
+export PATH=~/.npm-global/bin:~/.local/bin:~/.scripts:$PATH
 
 # Misc functions
 [ -f ~/.scripts/misc.sh ] && . ~/.scripts/misc.sh
