@@ -51,8 +51,24 @@ mkdir -p "$HOME/.claude"
 mkdir -p "$HOME/.config/gh"
 mkdir -p "$HOME/.config/github-copilot"
 
-# Force recreate: 기존 컨테이너 삭제
+# Force recreate: Dockerfile 변경 시 이미지 자동 재빌드
 if [ "$FORCE_RECREATE" = true ]; then
+  DOCKERFILE="$DEVENV_DIR/Dockerfile"
+  IMAGE_EXISTS=$(docker inspect --type=image "$IMAGE_NAME" 2>/dev/null)
+  if [ -z "$IMAGE_EXISTS" ]; then
+    echo "Image not found, building..."
+    docker build --build-arg USERNAME=$(whoami) --build-arg UID=$(id -u) --build-arg GID=$(id -g) -t "$IMAGE_NAME" "$DEVENV_DIR"
+  elif [ -f "$DOCKERFILE" ]; then
+    IMAGE_CREATED=$(docker inspect --format='{{.Created}}' "$IMAGE_NAME" 2>/dev/null)
+    IMAGE_CREATED_EPOCH=$(date -d "$IMAGE_CREATED" +%s 2>/dev/null)
+    DOCKERFILE_MTIME=$(stat -c %Y "$DOCKERFILE")
+    if [ "$DOCKERFILE_MTIME" -gt "$IMAGE_CREATED_EPOCH" ]; then
+      echo "Dockerfile changed, rebuilding image..."
+      docker build --build-arg USERNAME=$(whoami) --build-arg UID=$(id -u) --build-arg GID=$(id -g) -t "$IMAGE_NAME" "$DEVENV_DIR"
+    fi
+  fi
+
+  # 기존 컨테이너 삭제
   if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
     echo "Removing existing container..."
     docker rm -f "$CONTAINER_NAME" >/dev/null

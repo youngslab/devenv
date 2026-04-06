@@ -19,6 +19,9 @@ RUN apt-get update && \
       gdb debuginfod elfutils heaptrack \
     && rm -rf /var/lib/apt/lists/*
 
+# tini 설치 (PID 1 zombie reaping용)
+RUN apt-get update && apt-get install -y --no-install-recommends tini && rm -rf /var/lib/apt/lists/*
+
 # tmux 최신 버전 설치 (3.5+ for extended-keys-format)
 RUN TMUX_VERSION=$(curl -s "https://api.github.com/repos/tmux/tmux/releases/latest" | grep -Po '"tag_name": "\K[^"]*') && \
     curl -Lo /tmp/tmux.tar.gz "https://github.com/tmux/tmux/releases/download/${TMUX_VERSION}/tmux-${TMUX_VERSION}.tar.gz" && \
@@ -149,5 +152,5 @@ RUN mkdir -p ~/.npm-global && \
     npm config set prefix '~/.npm-global' && \
     npm install -g @anthropic-ai/claude-code
 
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+ENTRYPOINT ["tini", "--", "/usr/local/bin/entrypoint.sh"]
 CMD ["zsh"]
