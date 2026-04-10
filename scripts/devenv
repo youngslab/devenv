@@ -53,6 +53,10 @@ mkdir -p "$HOME/.config/github-copilot"
 
 # Force recreate: Dockerfile 변경 시 이미지 자동 재빌드
 if [ "$FORCE_RECREATE" = true ]; then
+  # 최신 소스 가져오기
+  echo "Pulling latest changes..."
+  git -C "$DEVENV_DIR" pull --rebase || true
+
   DOCKERFILE="$DEVENV_DIR/Dockerfile"
   IMAGE_EXISTS=$(docker inspect --type=image "$IMAGE_NAME" 2>/dev/null)
   if [ -z "$IMAGE_EXISTS" ]; then
@@ -132,6 +136,7 @@ docker run -d \
   -v "$HOME/.ssh:/home/$USERNAME/.ssh" \
   -v "$HOME/.gnupg:/home/$USERNAME/.gnupg:ro" \
   -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /mnt:/mnt:ro \
   "$IMAGE_NAME" \
   tail -f /dev/null
 
