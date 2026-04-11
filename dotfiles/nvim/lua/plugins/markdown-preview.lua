@@ -12,7 +12,7 @@ return {
       vim.g.mkdp_auto_start = 0          -- 자동 시작 비활성화
       vim.g.mkdp_auto_close = 0          -- 버퍼 닫아도 프리뷰 유지
       vim.g.mkdp_open_to_the_world = 1   -- 0.0.0.0 바인딩 (원격 접속 허용)
-      vim.g.mkdp_port = "8091"           -- 고정 포트
+      vim.g.mkdp_port = ""               -- 랜덤 포트
       vim.g.mkdp_browser = ""            -- 브라우저 자동 열기 비활성화
       vim.g.mkdp_echo_preview_url = 1    -- 프리뷰 URL 출력
     end,
