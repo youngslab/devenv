@@ -48,6 +48,16 @@ if command -v claude &>/dev/null; then
 fi
 
 # ========================================
+# Codex CLI 설치/업데이트
+# ========================================
+if command -v codex &>/dev/null; then
+  npm update -g @openai/codex 2>/dev/null || true
+else
+  echo "Installing Codex CLI..."
+  npm install -g @openai/codex 2>/dev/null || true
+fi
+
+# ========================================
 # SuperClaude 설치 (Claude Code 확장 프레임워크)
 # ========================================
 if [ ! -d "$HOME/.local/share/pipx/venvs/superclaude" ]; then

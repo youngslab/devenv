@@ -48,6 +48,7 @@ HOME_VOLUME="devenv-home-${SAFE_USERNAME}"
 
 # 마운트할 디렉토리 미리 생성 (없으면 Docker가 root로 생성해서 권한 문제 발생)
 mkdir -p "$HOME/.claude"
+mkdir -p "$HOME/.codex"
 mkdir -p "$HOME/.config/gh"
 mkdir -p "$HOME/.config/github-copilot"
 
@@ -131,6 +132,7 @@ docker run -d \
   -v "$DOTFILES_DIR:/home/$USERNAME/.dotfiles" \
   -v "$HOME/.claude:/home/$USERNAME/.claude" \
   -v "$HOME/.claude.json:/home/$USERNAME/.claude.json" \
+  -v "$HOME/.codex:/home/$USERNAME/.codex" \
   -v "$HOME/.config/gh:/home/$USERNAME/.config/gh" \
   -v "$HOME/.config/github-copilot:/home/$USERNAME/.config/github-copilot" \
   -v "$HOME/.ssh:/home/$USERNAME/.ssh" \
