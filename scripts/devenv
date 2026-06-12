@@ -121,6 +121,8 @@ docker run -d \
   --user "$(id -u):$(id -g)" \
   --restart unless-stopped \
   --network host \
+  --security-opt seccomp=unconfined \
+  --cap-add SYS_PTRACE \
   $GROUP_OPTS \
   $ENV_FILE_ARG \
   -e HOME="/home/${USERNAME}" \
