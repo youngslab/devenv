@@ -52,6 +52,30 @@ mkdir -p "$HOME/.codex"
 mkdir -p "$HOME/.config/gh"
 mkdir -p "$HOME/.config/github-copilot"
 
+# tmux 서버를 경유해 접속한다.
+# 이유: Bun 1.3.14(claude 2.1.x 번들)는 `docker exec` 프로세스 트리에서 직접
+#       실행되면 JSC thread suspension 단계에서 segfault 한다 (oven-sh/bun#31832).
+#       컨테이너 시작 시점에 띄운 tmux 서버(메인 프로세스 트리)의 pane에서 실행하면
+#       크래시를 회피할 수 있으므로, docker exec는 tmux 클라이언트 attach 용도로만 쓴다.
+connect_via_tmux() {
+  local detach="--detach-keys=ctrl-@"
+  local uid_gid
+  uid_gid="$(id -u):$(id -g)"
+
+  # 인자가 없거나 zsh 이면: 영속 공유 세션 "main" 에 attach (없으면 생성)
+  if [ "$#" -eq 0 ] || { [ "$#" -eq 1 ] && [ "$1" = "zsh" ]; }; then
+    exec docker exec -it $detach --user "$uid_gid" "$CONTAINER_NAME" \
+      tmux new-session -A -s main
+  fi
+
+  # 명령이 주어지면: 별도 tmux 세션으로 실행해 tmux-server 트리에 머물게 한다.
+  local session cmd_str
+  session="${1//[^a-zA-Z0-9_-]/_}"
+  cmd_str="$(printf '%q ' "$@")"
+  exec docker exec -it $detach --user "$uid_gid" "$CONTAINER_NAME" \
+    tmux new-session -A -s "$session" "$cmd_str"
+}
+
 # Force recreate: Dockerfile 변경 시 이미지 자동 재빌드
 if [ "$FORCE_RECREATE" = true ]; then
   # 최신 소스 가져오기
@@ -80,9 +104,9 @@ if [ "$FORCE_RECREATE" = true ]; then
   fi
 fi
 
-# 이미 실행 중이면 exec으로 접속
+# 이미 실행 중이면 tmux 서버를 경유해 접속
 if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
-  exec docker exec -it --detach-keys='ctrl-@' --user "$(id -u):$(id -g)" "$CONTAINER_NAME" "${@:-zsh}"
+  connect_via_tmux "$@"
 fi
 
 # 중지된 컨테이너가 있으면 시작 후 접속
@@ -90,7 +114,7 @@ if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
   echo "Starting stopped container..."
   docker start "$CONTAINER_NAME"
   sleep 1
-  exec docker exec -it --detach-keys='ctrl-@' --user "$(id -u):$(id -g)" "$CONTAINER_NAME" "${@:-zsh}"
+  connect_via_tmux "$@"
 fi
 
 # Volume 초기화 (비어있으면 권한 설정)
@@ -128,6 +152,9 @@ docker run -d \
   -e HOME="/home/${USERNAME}" \
   -e USER="${USERNAME}" \
   -e CONTAINER_NAME="${CONTAINER_NAME}" \
+  -e TERM="${TERM:-xterm-256color}" \
+  -e LANG="en_US.UTF-8" \
+  -e LC_ALL="en_US.UTF-8" \
   --shm-size=2g \
   -v "${HOME_VOLUME}:/home/${USERNAME}" \
   -v "$WORKSPACE_DIR:/home/$USERNAME/workspace" \
@@ -141,11 +168,10 @@ docker run -d \
   -v "$HOME/.gnupg:/home/$USERNAME/.gnupg:ro" \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v /mnt:/mnt:ro \
-  "$IMAGE_NAME" \
-  tail -f /dev/null
+  "$IMAGE_NAME"
 
 # 컨테이너가 시작될 때까지 대기
 sleep 1
 
-# exec으로 접속 (detach-keys 변경: Ctrl+P 충돌 방지)
-exec docker exec -it --detach-keys='ctrl-@' --user "$(id -u):$(id -g)" "$CONTAINER_NAME" "${@:-zsh}"
+# tmux 서버(메인 프로세스 트리)를 경유해 접속
+connect_via_tmux "$@"

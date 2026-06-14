@@ -98,5 +98,11 @@ if [ -d "$DOTFILES_DIR" ]; then
   [ -f "$DOTFILES_DIR/gdb/gdbinit" ] && ln -sf "$DOTFILES_DIR/gdb/gdbinit" "$HOME/.gdbinit"
 fi
 
+# 인자 없이 실행되면(데몬 모드): tmux 세션 생성 후 대기
+if [ "$#" -eq 0 ] || [ "$1" = "zsh" ]; then
+  tmux new-session -d -s main -c "$HOME/workspace" zsh 2>/dev/null || true
+  exec tail -f /dev/null
+fi
+
 # Execute the command passed to docker run
 exec "$@"
