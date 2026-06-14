@@ -152,5 +152,5 @@ RUN mkdir -p ~/.npm-global && \
     npm config set prefix '~/.npm-global' && \
     npm install -g @anthropic-ai/claude-code
 
-ENTRYPOINT ["tini", "--", "/usr/local/bin/entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["zsh"]

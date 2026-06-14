@@ -98,10 +98,14 @@ if [ -d "$DOTFILES_DIR" ]; then
   [ -f "$DOTFILES_DIR/gdb/gdbinit" ] && ln -sf "$DOTFILES_DIR/gdb/gdbinit" "$HOME/.gdbinit"
 fi
 
-# 인자 없이 실행되면(데몬 모드): tmux 세션 생성 후 대기
+# 인자 없이 실행되면(데몬 모드): bash를 PID 1로 유지하여 zombie reap
+# exec 사용 금지 — bash가 PID 1로 남아야 SIGCHLD를 처리해 zombie를 수거함
+# (tini를 쓰면 Bun 1.3.14의 JSC 스레드 서스펜션이 실패해 claude가 crash함)
 if [ "$#" -eq 0 ] || [ "$1" = "zsh" ]; then
   tmux new-session -d -s main -c "$HOME/workspace" zsh 2>/dev/null || true
-  exec tail -f /dev/null
+  # tail을 백그라운드로 실행하고 bash가 wait 루프에서 zombie를 reap
+  tail -f /dev/null &
+  wait
 fi
 
 # Execute the command passed to docker run
