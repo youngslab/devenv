@@ -133,18 +133,59 @@ See [devenv_cheatsheet.md](devenv_cheatsheet.md) for full keybinding reference.
 
 ## VNC (Browser Automation)
 
-For OAuth flows requiring a browser:
+New containers start the desktop automatically for browser/OAuth workflows:
 
 ```bash
-# Start VNC server
-vnc-server start
+# Check the automatically started desktop
+vnc-server status
 
 # Access via web browser
 # http://localhost:7900
 
 # Run Chrome
-DISPLAY=:99 google-chrome --no-sandbox
+google-chrome --no-sandbox
 ```
+
+### Automatic desktop and DISPLAY
+
+New images start Xvfb, Fluxbox, VNC and noVNC automatically on container
+start/restart. `devenv` also runs a bounded, idempotent health check when attaching:
+only missing services are started. Healthy X sessions and clipboard contents are
+not reset. New commands inherit `DISPLAY=:99`, including `codex`; the host's
+SSH-forwarded DISPLAY is intentionally not inherited. Existing tmux panes and
+Codex processes must be relaunched to receive environment changes.
+
+- `vnc-server status` shows readiness; `vnc-server ensure` repairs missing services.
+- `start` is an alias for `ensure`; `stop` / `restart` are explicit, destructive to
+  desktop sessions. Logs and identity records live in `/tmp/vnc` (private to its owner).
+- Startup/lock waits are bounded to 15 seconds; failures warn but do not deny shell
+  access. This is not a continuous supervisor: recovery happens on the next attach.
+- Set `DEVENV_VNC_AUTOSTART=0` in the launcher's `.env` **before container creation**
+  to disable automatic startup (DISPLAY remains set). An existing container keeps
+  its own setting; host environment changes do not override it. Disabling startup
+  does not stop already running services.
+- Old images / legacy PID records are not silently adopted or restarted. Rebuild
+  the image and schedule container recreation for full activation; the launcher
+  never automatically rebuilds or recreates an existing container. `devenv -f`
+  remains an explicit destructive action. Do not use it during an active session.
+
+Both VNC (5900) and noVNC (7900) bind **127.0.0.1 only**; X11 TCP is disabled.
+For remote browser access, tunnel `ssh -L 7900:127.0.0.1:7900 user@server`, then open
+<http://127.0.0.1:7900>. These services have no password: other processes/users on
+the server are trusted, as are local X11 socket clients (`Xvfb -ac`). Do not expose
+these listeners through a public proxy or port forward.
+
+This prepares Codex to read the **remote X11 clipboard**. It does **not** transport
+images copied on your local PC to the server; noVNC/OSC 52 text clipboard support
+is not an image clipboard bridge.
+
+Verification: `python3 -m unittest discover -s tests -v`,
+`bash -n scripts/devenv scripts/entrypoint.sh`, and `git diff --check`.
+
+Opt-in real-service verification (requires an existing `devenv:latest` image):
+`python3 tests/integration_vnc.py`. It builds a disposable overlay image and tests
+real services with no host mounts, published ports, or changes to the active container.
+This is not a full Dockerfile rebuild.
 
 ## Volumes
 

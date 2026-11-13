@@ -2,7 +2,7 @@
 # DevEnv container launcher
 # - 백그라운드에서 실행되어 SSH 세션 종료 후에도 유지
 # - 자동 재시작 (unless-stopped)
-# - noVNC 포트(7901) 기본 활성화
+# - noVNC는 127.0.0.1:7900에서 자동 시작
 #
 # Usage: devenv [-f|--force] [command]
 #   -f, --force  Force recreate container (removes existing)
@@ -62,18 +62,28 @@ connect_via_tmux() {
   local uid_gid
   uid_gid="$(id -u):$(id -g)"
 
+  # Use the container's effective opt-out, never a conflicting host value.
+  # Old images must not run their unsafe legacy start implementation.
+  timeout 15s docker exec --user "$uid_gid" -e DISPLAY=:99 "$CONTAINER_NAME" sh -c '
+    [ "${DEVENV_VNC_AUTOSTART:-1}" = 0 ] && exit 0
+    if [ "$(vnc-server capabilities 2>/dev/null)" = safe-ensure-v1 ]; then
+      exec vnc-server ensure
+    fi
+    echo "VNC autostart unavailable: rebuild image and schedule container recreation; shell remains available." >&2
+  ' || echo "Warning: VNC unavailable; continuing shell connection." >&2
+
   # 인자가 없거나 zsh 이면: 영속 공유 세션 "main" 에 attach (없으면 생성)
   if [ "$#" -eq 0 ] || { [ "$#" -eq 1 ] && [ "$1" = "zsh" ]; }; then
-    exec docker exec -it $detach --user "$uid_gid" "$CONTAINER_NAME" \
-      tmux new-session -A -s main
+    exec docker exec -it $detach --user "$uid_gid" -e DISPLAY=:99 "$CONTAINER_NAME" \
+      tmux new-session -e DISPLAY=:99 -A -s main
   fi
 
   # 명령이 주어지면: 별도 tmux 세션으로 실행해 tmux-server 트리에 머물게 한다.
   local session cmd_str
   session="${1//[^a-zA-Z0-9_-]/_}"
   cmd_str="$(printf '%q ' "$@")"
-  exec docker exec -it $detach --user "$uid_gid" "$CONTAINER_NAME" \
-    tmux new-session -A -s "$session" "$cmd_str"
+  exec docker exec -it $detach --user "$uid_gid" -e DISPLAY=:99 "$CONTAINER_NAME" \
+    tmux new-session -e DISPLAY=:99 -A -s "$session" "$cmd_str"
 }
 
 # Force recreate: Dockerfile 변경 시 이미지 자동 재빌드
@@ -124,10 +134,10 @@ if ! docker volume inspect "$HOME_VOLUME" &>/dev/null; then
 fi
 
 # Volume 권한 확인 및 수정 (root로 실행)
-docker run --rm \
+docker run --rm --entrypoint chown --user 0 -e DEVENV_VNC_AUTOSTART=0 \
   -v "${HOME_VOLUME}:/home/${USERNAME}" \
   "$IMAGE_NAME" \
-  chown -R "$(id -u):$(id -g)" "/home/${USERNAME}" 2>/dev/null
+  -R "$(id -u):$(id -g)" "/home/${USERNAME}" 2>/dev/null
 
 # Docker 그룹 GID (호스트)
 DOCKER_GID=$(getent group docker 2>/dev/null | cut -d: -f3)
@@ -149,6 +159,7 @@ docker run -d \
   --cap-add SYS_PTRACE \
   $GROUP_OPTS \
   $ENV_FILE_ARG \
+  -e DISPLAY=:99 \
   -e HOME="/home/${USERNAME}" \
   -e USER="${USERNAME}" \
   -e CONTAINER_NAME="${CONTAINER_NAME}" \

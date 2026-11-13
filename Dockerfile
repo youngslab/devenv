@@ -110,6 +110,8 @@ RUN sed -i 's/# \(en_US.UTF-8 UTF-8\)/\1/' /etc/locale.gen && \
 # 터미널 색상 지원
 ENV TERM=xterm-256color
 ENV COLORTERM=truecolor
+ENV DISPLAY=:99
+ENV DEVENV_VNC_AUTOSTART=1
 
 # oh-my-zsh + 플러그인을 /opt에 설치 (템플릿용)
 RUN git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh /opt/oh-my-zsh && \

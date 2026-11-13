@@ -240,7 +240,7 @@ devenv bash         # bash 쉘
 
 ## VNC + Chrome (OAuth 인증용)
 
-컨테이너에 Chrome과 VNC가 포함되어 있습니다.
+컨테이너 시작 시 Chrome용 VNC가 자동 준비됩니다. DISPLAY는 :99입니다.
 
 ### 서비스 시작/중지
 
@@ -261,18 +261,39 @@ vnc-server restart   # 재시작
 ### Chrome 실행
 
 ```bash
-# VNC 서버 시작 후
-vnc-server start
+# 자동 시작 상태 확인
+vnc-server status
 
 # Chrome 실행 (noVNC에서 화면 확인)
-DISPLAY=:99 google-chrome --no-sandbox
+google-chrome --no-sandbox
 ```
 
 ### 화면 해상도 변경
 
 ```bash
-SCREEN_WIDTH=1280 SCREEN_HEIGHT=720 vnc-server start
+# 주의: restart는 기존 브라우저/X11 세션을 종료합니다.
+SCREEN_WIDTH=1280 SCREEN_HEIGHT=720 vnc-server restart
 ```
+
+### 자동 VNC / Codex DISPLAY
+
+새 이미지에서는 컨테이너 시작·재시작과 `devenv` 재접속 시 VNC를 자동 확인합니다.
+`DISPLAY=:99`가 기본이므로 새 세션에서는 `codex`만 실행하면 됩니다.
+
+```bash
+vnc-server status          # 실제 준비 상태
+vnc-server ensure          # 정상 세션은 유지하고 누락 서비스만 시작
+# 원격 PC에서 브라우저 접근할 때
+ssh -L 7900:127.0.0.1:7900 user@server
+# http://127.0.0.1:7900
+```
+
+- `.env`의 `DEVENV_VNC_AUTOSTART=0`: 다음 컨테이너 생성부터 자동 시작 해제.
+- 기존 이미지/컨테이너는 자동 교체하지 않습니다. 빌드 및 컨테이너 교체 일정을
+  별도로 잡으세요. 실행 중인 tmux pane/Codex 환경도 소급 변경되지 않습니다.
+- 실패 로그: `/tmp/vnc/*.log`. 최대 15초 대기 후 경고하고 셸 접속은 계속합니다.
+- 5900/7900은 loopback 전용이나 비밀번호가 없으므로 서버의 로컬 사용자를 신뢰합니다.
+- 로컬 PC에서 복사한 **이미지 전송은 별도**입니다. DISPLAY 설정만으로 전송되지 않습니다.
 
 ---
 

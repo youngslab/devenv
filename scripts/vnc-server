@@ -1,111 +1,346 @@
-#!/bin/bash
-# VNC Server 실행 스크립트 (Chrome + noVNC)
-# 사용법: vnc-server [start|stop|status]
-#
-# 포트:
-#   5900 - VNC (전용 클라이언트)
-#   7900 - noVNC (웹 브라우저)
+#!/usr/bin/env python3
+"""Manage the private :99 desktop. Python is already part of the devenv image."""
+import ctypes
+import errno
+import fcntl
+import json
+import os
+from pathlib import Path
+import signal
+import socket
+import stat
+import subprocess
+import sys
+import time
 
-export DISPLAY=:99
-SCREEN_WIDTH=${SCREEN_WIDTH:-1920}
-SCREEN_HEIGHT=${SCREEN_HEIGHT:-1080}
-SCREEN_DEPTH=${SCREEN_DEPTH:-24}
+SERVICES = ('xvfb', 'fluxbox', 'vnc', 'novnc')
+WORKDIRS = {'novnc': '/opt/noVNC/utils/websockify'}
+XSOCKET = Path('/tmp/.X11-unix/X99')
+XLOCK = Path('/tmp/.X99-lock')
+COMMANDS = {
+    'xvfb': ['Xvfb', ':99', '-screen', '0',
+             '{}x{}x{}'.format(*(os.environ.get(k, v) for k, v in
+                 [('SCREEN_WIDTH', '1920'), ('SCREEN_HEIGHT', '1080'), ('SCREEN_DEPTH', '24')])),
+             '-ac', '-nolisten', 'tcp'],
+    'fluxbox': ['fluxbox', '-display', ':99'],
+    'vnc': ['x11vnc', '-display', ':99', '-forever', '-shared', '-rfbport', '5900',
+            '-listen', '127.0.0.1', '-no6', '-noipv6', '-rfbportv6', '-1', '-nopw', '-quiet'],
+    # Run the bundled proxy directly, not novnc_proxy's background shell wrapper.
+    'novnc': [sys.executable, '-m', 'websockify', '--web=/opt/noVNC',
+              '127.0.0.1:7900', '127.0.0.1:5900'],
+}
 
-PIDDIR="/tmp/vnc"
-mkdir -p "$PIDDIR"
 
-start_xvfb() {
-    if [ -f "$PIDDIR/xvfb.pid" ] && kill -0 "$(cat "$PIDDIR/xvfb.pid")" 2>/dev/null; then
+class ServiceError(Exception):
+    pass
+
+
+def identity(pid):
+    try:
+        base = Path('/proc') / str(pid)
+        fields = (base / 'stat').read_text().rsplit(')', 1)[1].split()
+        if fields[0] == 'Z':
+            return None
+        # Linux can expose empty cmdline briefly even after Popen's exec handshake.
+        args = []
+        for _ in range(10):
+            args = (base / 'cmdline').read_bytes().decode().split('\0')[:-1]
+            if args:
+                break
+            time.sleep(.005)
+        return {'pid': pid, 'start': fields[19], 'exe': os.readlink(base / 'exe'),
+                'args': args,
+                'uid': base.stat().st_uid}
+    except (OSError, ValueError):
+        return None
+
+
+def listening(port):
+    """Report every IPv4/IPv6 listener, including wildcard bindings."""
+    found = []
+    for table in ('tcp', 'tcp6'):
+        for line in Path('/proc/net', table).read_text().splitlines()[1:]:
+            fields = line.split()
+            address, number = fields[1].split(':')
+            if fields[3] == '0A' and int(number, 16) == port:
+                found.append((table, address))
+    return found
+
+
+class Manager:
+    def __init__(self, directory=Path('/tmp/vnc'), budget=14):
+        self.directory = Path(directory)
+        self.deadline = time.monotonic() + budget
+        self.children = {}
+
+    def remaining(self):
+        value = self.deadline - time.monotonic()
+        if value <= 0:
+            raise ServiceError('15-second startup budget exhausted')
+        return value
+
+    def prepare(self):
+        try:
+            self.directory.mkdir(mode=0o700, exist_ok=True)
+            info = self.directory.lstat()
+            if not stat.S_ISDIR(info.st_mode) or info.st_uid != os.getuid():
+                raise ServiceError(f'Unsafe state directory {self.directory}: owner/directory mismatch')
+            self.directory.chmod(0o700)
+        except OSError as error:
+            raise ServiceError(f'Cannot access state directory: {error}') from error
+
+    def lock(self):
+        fd = os.open(self.directory / 'lock', os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+        if os.fstat(fd).st_uid != os.getuid():
+            os.close(fd)
+            raise ServiceError('Lock owned by another user')
+        while True:
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                return fd
+            except BlockingIOError:
+                try:
+                    time.sleep(min(0.1, self.remaining()))
+                except ServiceError:
+                    os.close(fd)
+                    raise
+
+    def path(self, service):
+        return self.directory / (service + '.pid')
+
+    def save(self, service, value):
+        path = self.path(service)
+        temporary = path.with_suffix('.tmp')
+        fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o600)
+        with os.fdopen(fd, 'w') as handle:
+            json.dump(value, handle)
+        temporary.replace(path)
+
+    def record(self, service):
+        path = self.path(service)
+        if not path.exists() and not path.is_symlink():
+            return None
+        info = path.lstat()
+        if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid():
+            raise ServiceError(f'{service}: unsafe ownership record')
+        try:
+            record = json.loads(path.read_text())
+            if not isinstance(record, dict) or set(record) != {'pid', 'start', 'exe', 'args', 'uid'}:
+                raise ValueError('legacy record')
+            if record['uid'] != os.getuid():
+                raise ValueError('foreign owner')
+        except (ValueError, OSError) as error:
+            raise ServiceError(f'{service}: legacy/invalid PID record; schedule container recreation; no takeover') from error
+        return record if identity(record['pid']) == record else None
+
+    def ready(self, service, record):
+        if identity(record['pid']) != record:
+            return False
+        args = record['args']
+        expected = COMMANDS[service]
+        # Interpreter prefixes may vary; require the complete configured argument suffix.
+        if args[-(len(expected) - 1):] != expected[1:]:
+            raise ServiceError(f'{service}: unsafe/old command; explicit restart or recreate required')
+        if service == 'xvfb':
+            if listening(6099):
+                raise ServiceError('X11 TCP listener detected; refusing healthy status')
+            try:
+                result = subprocess.run([sys.executable, __file__, '_probe-x'],
+                    timeout=min(1, self.remaining()), stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL, close_fds=True)
+                return result.returncode == 0
+            except subprocess.TimeoutExpired:
+                return False
+        if service == 'fluxbox':
+            return True
+        port = 5900 if service == 'vnc' else 7900
+        bindings = listening(port)
+        if any(binding != ('tcp', '0100007F') for binding in bindings):
+            raise ServiceError(f'{service}: unsafe non-loopback listener on {port}')
+        if not bindings:
+            return False
+        try:
+            # x11vnc may take >200ms to send its greeting during initialization.
+            # Keep a usable protocol probe without exceeding the shared deadline.
+            with socket.create_connection(('127.0.0.1', port), timeout=min(2, self.remaining())) as connection:
+                if service == 'vnc':
+                    connection.settimeout(min(2, self.remaining()))
+                    return connection.recv(12).startswith(b'RFB ')
+                connection.settimeout(min(2, self.remaining()))
+                connection.sendall(b'GET / HTTP/1.0\r\nHost: localhost\r\n\r\n')
+                connection.settimeout(min(2, self.remaining()))
+                return connection.recv(32).startswith(b'HTTP/')
+        except OSError:
+            return False
+
+    def cleanup_stale_display(self):
+        """Recover our own crashed X server, never adopt an unknown display."""
+        path = self.path('xvfb')
+        if not path.exists() or self.record('xvfb') is not None:
+            return
+        old = json.loads(path.read_text())  # record() already validated ownership/schema
+        if identity(old['pid']) is not None:
+            return  # PID reuse is ambiguous, even if the recorded start time differs.
+        if old['args'][-(len(COMMANDS['xvfb']) - 1):] != COMMANDS['xvfb'][1:]:
+            return
+        try:
+            socket_info, lock_info = XSOCKET.lstat(), XLOCK.lstat()
+            if (socket_info.st_uid != os.getuid() or lock_info.st_uid != os.getuid()
+                    or not stat.S_ISSOCK(socket_info.st_mode)
+                    or not stat.S_ISREG(lock_info.st_mode)
+                    or XLOCK.read_text().strip() != str(old['pid'])):
+                return
+            with socket.socket(socket.AF_UNIX) as probe:
+                probe.settimeout(min(.2, self.remaining()))
+                try:
+                    probe.connect(str(XSOCKET))
+                    return  # A live display always wins, irrespective of metadata.
+                except OSError as error:
+                    if error.errno != errno.ECONNREFUSED:
+                        return
+            # Refuse replacement races between validation and cleanup.
+            for entry, before in ((XSOCKET, socket_info), (XLOCK, lock_info)):
+                after = entry.lstat()
+                if (after.st_dev, after.st_ino, after.st_mtime_ns, after.st_size) != (
+                        before.st_dev, before.st_ino, before.st_mtime_ns, before.st_size):
+                    return
+            XSOCKET.unlink()
+            XLOCK.unlink()
+            print('Removed owned stale :99 socket after previous X server exited')
+        except FileNotFoundError:
+            return
+
+    def conflict(self, service):
+        if service == 'xvfb':
+            self.cleanup_stale_display()
+            if XSOCKET.exists() or XLOCK.exists():
+                raise ServiceError('Unowned display :99 exists; refusing takeover')
+        port = {'vnc': 5900, 'novnc': 7900}.get(service)
+        if port and listening(port):
+            raise ServiceError(f'Unowned port {port} exists; refusing takeover')
+
+    def launch(self, service):
+        self.conflict(service)
+        log = self.directory / (service + '.log')
+        fd = os.open(log, os.O_WRONLY | os.O_APPEND | os.O_CREAT | os.O_NOFOLLOW, 0o600)
+        with os.fdopen(fd, 'ab') as output:
+            child = subprocess.Popen(COMMANDS[service], stdout=output, stderr=output,
+                stdin=subprocess.DEVNULL, env={**os.environ, 'DISPLAY': ':99'},
+                start_new_session=True, close_fds=True,
+                cwd=WORKDIRS.get(service))
+        self.children[service] = child
+        record = None
+        try:
+            record = identity(child.pid)
+            if not record:
+                raise ServiceError('process exited immediately')
+            self.save(service, record)
+            while not self.ready(service, record):
+                if child.poll() is not None:
+                    raise ServiceError('process exited')
+                time.sleep(min(.1, self.remaining()))
+        except (ServiceError, OSError) as error:
+            # This Popen handle belongs to a child we just created. It remains
+            # authoritative even if recording failed or runtime argv changed.
+            if child.poll() is None:
+                os.killpg(child.pid, signal.SIGTERM)
+                try:
+                    child.wait(timeout=.3)
+                except subprocess.TimeoutExpired:
+                    os.killpg(child.pid, signal.SIGKILL)
+                    child.wait(timeout=.3)
+            if record and self.path(service).exists():
+                try:
+                    if json.loads(self.path(service).read_text()) == record:
+                        self.path(service).unlink()
+                except (OSError, ValueError):
+                    pass
+            raise ServiceError(f'{service}: {error}; see {log}') from error
+
+    def ensure(self):
+        for service in SERVICES:
+            self.remaining()
+            record = self.record(service)
+            if record:
+                while not self.ready(service, record):
+                    if identity(record['pid']) != record:
+                        raise ServiceError(f'{service}: exited; see {self.directory / (service + ".log")}')
+                    time.sleep(min(.1, self.remaining()))
+            else:
+                self.launch(service)
+        print('VNC ready: DISPLAY=:99; http://127.0.0.1:7900 (local users trusted)')
+
+    def stop_one(self, service):
+        record = self.record(service)
+        if record:
+            pid = record['pid']
+            # All managed children are session leaders; never signal a foreign group.
+            if os.getpgid(pid) != pid or os.getsid(pid) != pid:
+                raise ServiceError(f'{service}: not an owned session leader; refusing stop')
+            os.killpg(pid, signal.SIGTERM)
+            until = time.monotonic() + .3
+            while identity(pid) == record and time.monotonic() < until:
+                time.sleep(.02)
+            if identity(pid) == record:
+                os.killpg(pid, signal.SIGKILL)
+            if service != 'xvfb' or not (XSOCKET.exists() or XLOCK.exists()):
+                self.path(service).unlink()
+        child = self.children.get(service)
+        if child:
+            child.wait(timeout=.5)
+
+    def stop(self):
+        # Validate every record before signalling anything (legacy state is untouched).
+        for service in SERVICES:
+            self.record(service)
+        for service in reversed(SERVICES):
+            self.stop_one(service)
+
+    def status(self):
+        healthy = True
+        for service in SERVICES:
+            record = self.record(service)
+            ready = bool(record and self.ready(service, record))
+            print(f'{service}: {"ready" if ready else "stopped/not ready"}' +
+                  (f' (PID {record["pid"]})' if record else ''))
+            healthy &= ready
+        return 0 if healthy else 1
+
+
+def main():
+    command = sys.argv[1] if len(sys.argv) > 1 else 'start'
+    if command == 'capabilities':
+        print('safe-ensure-v1')
         return 0
-    fi
-    echo "Starting Xvfb on display :99..."
-    Xvfb :99 -screen 0 ${SCREEN_WIDTH}x${SCREEN_HEIGHT}x${SCREEN_DEPTH} -ac &
-    echo $! > "$PIDDIR/xvfb.pid"
-    sleep 1
-}
+    if command == '_probe-x':
+        library = ctypes.CDLL('libX11.so.6')
+        library.XOpenDisplay.restype = ctypes.c_void_p
+        display = library.XOpenDisplay(b':99')
+        if display:
+            library.XCloseDisplay.argtypes = [ctypes.c_void_p]
+            library.XCloseDisplay(display)
+        return 0 if display else 1
+    if command not in ('start', 'ensure', 'stop', 'restart', 'status'):
+        print('Usage: vnc-server [start|ensure|stop|restart|status|capabilities]', file=sys.stderr)
+        return 2
+    manager = Manager()
+    try:
+        manager.prepare()
+        fd = manager.lock()
+        try:
+            if command == 'status':
+                return manager.status()
+            if command in ('stop', 'restart'):
+                manager.stop()
+            if command in ('start', 'ensure', 'restart'):
+                manager.ensure()
+        finally:
+            os.close(fd)
+    except (ServiceError, OSError, subprocess.SubprocessError) as error:
+        print(f'vnc-server: {error}', file=sys.stderr)
+        return 1
+    return 0
 
-start_fluxbox() {
-    if [ -f "$PIDDIR/fluxbox.pid" ] && kill -0 "$(cat "$PIDDIR/fluxbox.pid")" 2>/dev/null; then
-        return 0
-    fi
-    echo "Starting Fluxbox window manager..."
-    fluxbox -display :99 > /dev/null 2>&1 &
-    echo $! > "$PIDDIR/fluxbox.pid"
-    sleep 1
-}
 
-start_vnc() {
-    if [ -f "$PIDDIR/vnc.pid" ] && kill -0 "$(cat "$PIDDIR/vnc.pid")" 2>/dev/null; then
-        return 0
-    fi
-    echo "Starting VNC server on port 5900..."
-    x11vnc -display :99 -forever -shared -rfbport 5900 -nopw -quiet &
-    echo $! > "$PIDDIR/vnc.pid"
-    sleep 1
-}
-
-start_novnc() {
-    if [ -f "$PIDDIR/novnc.pid" ] && kill -0 "$(cat "$PIDDIR/novnc.pid")" 2>/dev/null; then
-        return 0
-    fi
-    echo "Starting noVNC on port 7900..."
-    /opt/noVNC/utils/novnc_proxy --vnc localhost:5900 --listen 7900 > /dev/null 2>&1 &
-    echo $! > "$PIDDIR/novnc.pid"
-    sleep 1
-}
-
-start() {
-    start_xvfb
-    start_fluxbox
-    start_vnc
-    start_novnc
-
-    echo ""
-    echo "=== VNC Server Started ==="
-    echo "VNC:    vnc://localhost:5900 (no password)"
-    echo "noVNC:  http://localhost:7900"
-    echo ""
-    echo "Chrome: DISPLAY=:99 google-chrome --no-sandbox"
-    echo ""
-}
-
-stop() {
-    echo "Stopping services..."
-    for service in novnc vnc fluxbox xvfb; do
-        if [ -f "$PIDDIR/$service.pid" ]; then
-            PID=$(cat "$PIDDIR/$service.pid")
-            if kill -0 "$PID" 2>/dev/null; then
-                kill "$PID" 2>/dev/null
-                echo "  Stopped $service (PID: $PID)"
-            fi
-            rm -f "$PIDDIR/$service.pid"
-        fi
-    done
-    echo "All services stopped"
-}
-
-status() {
-    echo "=== Service Status ==="
-    for service in xvfb fluxbox vnc novnc; do
-        if [ -f "$PIDDIR/$service.pid" ] && kill -0 "$(cat "$PIDDIR/$service.pid")" 2>/dev/null; then
-            echo "  $service: running (PID: $(cat "$PIDDIR/$service.pid"))"
-        else
-            echo "  $service: stopped"
-        fi
-    done
-    echo ""
-    echo "Ports:"
-    echo "  5900 - VNC"
-    echo "  7900 - noVNC (web browser)"
-}
-
-case "${1:-start}" in
-    start)   start ;;
-    stop)    stop ;;
-    status)  status ;;
-    restart) stop; sleep 1; start ;;
-    *)
-        echo "Usage: vnc-server [start|stop|status|restart]"
-        exit 1
-        ;;
-esac
+if __name__ == '__main__':
+    sys.exit(main())
