@@ -16,3 +16,7 @@ Thumbs.db
 # Local settings
 .claude/
 .env
+
+# Python verification artifacts
+__pycache__/
+*.pyc

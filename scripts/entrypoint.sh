@@ -5,6 +5,12 @@
 # HOME이 설정되지 않은 경우 설정
 export HOME="${HOME:-$(getent passwd "$(id -u)" | cut -d: -f6)}"
 
+# Desktop startup is bounded and must never block ordinary shell access.
+export DISPLAY=:99
+if [ "${DEVENV_VNC_AUTOSTART:-1}" != 0 ]; then
+  vnc-server ensure || echo "Warning: VNC unavailable; continuing container startup." >&2
+fi
+
 DOTFILES_DIR="$HOME/.dotfiles"
 
 # ========================================
